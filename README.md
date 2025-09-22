@@ -135,10 +135,8 @@ The TUI provides themed error messages and a clean, scrollable interface for all
 
 ## Contributing
 
-Contributions are welcome! Please refer to the `CONTRIBUTING.md` (to be created) for guidelines.
+
 
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-D&D 5e SRD content is used under the Open Game License (OGL). See the `OGL.md` (to be created) for details.
