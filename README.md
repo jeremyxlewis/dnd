@@ -20,7 +20,7 @@ A command-line companion for Dungeons & Dragons players and Dungeon Masters, bui
 
 1.  **Clone the repository:**
     ```bash
-    git clone --recurse-submodules https://github.com/YOUR_GITHUB_USERNAME/dnd-cli.git # Replace with your actual repo URL
+    git clone --recurse-submodules https://github.com/jeremyxlewis/dnd.git
     cd dnd-cli
     ```
 
