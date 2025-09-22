@@ -3,8 +3,10 @@ package tui
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"dnd-cli/internal/data"
 	"dnd-cli/internal/dice"
@@ -27,12 +29,165 @@ var (
 	promptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
 	quitStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
 	outputStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Padding(0, 1)
+	errorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Padding(0, 1) // Red for errors
 )
+
+var errorMessages = []string{
+	"Hark! That command eludes my arcane senses. Type 'help' for available incantations.",
+	"Alas! Thy words are shrouded in mystery. Seek 'help' to unveil the secrets.",
+	"By the gods! Such a command is unknown to me. Whisper 'help' for guidance.",
+	"Fie! That incantation is not in my grimoire. Type 'help' to see the spells I know.",
+	"Confusion reigns! Thy command is lost in the mists. 'Help' shall light the way.",
+	"Oh no! My magical ears have failed me. Try 'help' for the proper enchantments.",
+	"Zounds! That directive baffles even the wisest sages. 'Help' is thy ally.",
+	"Egad! Such a command hath never graced my presence. 'Help' awaits thy call.",
+	"Goodness me! Thy input is as enigmatic as a dragon's riddle. Seek 'help'.",
+	"Heavens! That order is beyond my ken. 'Help' will reveal the path forward.",
+}
+
+var spellErrorMessages = []string{
+	"Hark! The spell '%s' is not etched in my scrolls.",
+	"Alas! The incantation '%s' remains a mystery to me.",
+	"By the gods! Such a spell '%s' is unknown in these realms.",
+	"Fie! '%s' is not inscribed in my ancient tomes.",
+	"Confusion! The spell '%s' eludes my magical sight.",
+	"Oh no! '%s' is not among the spells I wield.",
+	"Zounds! '%s' baffles even the greatest wizards.",
+	"Egad! The spell '%s' hath never been cast here.",
+	"Goodness me! '%s' is as elusive as a shadow.",
+	"Heavens! '%s' is beyond my arcane knowledge.",
+}
+
+var monsterErrorMessages = []string{
+	"Hark! The beast '%s' is not known in these lands.",
+	"Alas! The creature '%s' lurks not in my bestiaries.",
+	"By the gods! Such a monster '%s' is unheard of.",
+	"Fie! '%s' is not among the beasts I've encountered.",
+	"Confusion! The monster '%s' hides from my gaze.",
+	"Oh no! '%s' is not in the wilds I know.",
+	"Zounds! '%s' confounds the bravest adventurers.",
+	"Egad! The beast '%s' hath never crossed my path.",
+	"Goodness me! '%s' is as mythical as a unicorn.",
+	"Heavens! '%s' is unknown to mortal ken.",
+}
+
+var itemErrorMessages = []string{
+	"Hark! The item '%s' is not in my treasure hoard.",
+	"Alas! The artifact '%s' is lost to the ages.",
+	"By the gods! Such an item '%s' is not in my vaults.",
+	"Fie! '%s' is not among my glittering treasures.",
+	"Confusion! The item '%s' evades my collection.",
+	"Oh no! '%s' is not in my adventurer's pack.",
+	"Zounds! '%s' baffles the greediest dragons.",
+	"Egad! The item '%s' hath never been hoarded.",
+	"Goodness me! '%s' is as rare as a philosopher's stone.",
+	"Heavens! '%s' is beyond my material grasp.",
+}
+
+var speciesErrorMessages = []string{
+	"Hark! The species '%s' is not known in these realms.",
+	"Alas! The race '%s' lurks not in my tomes.",
+	"By the gods! Such a species '%s' is unheard of.",
+	"Fie! '%s' is not among the races I've encountered.",
+	"Confusion! The species '%s' hides from my gaze.",
+	"Oh no! '%s' is not in the wilds I know.",
+	"Zounds! '%s' confounds the bravest adventurers.",
+	"Egad! The race '%s' hath never crossed my path.",
+	"Goodness me! '%s' is as mythical as a unicorn.",
+	"Heavens! '%s' is unknown to mortal ken.",
+}
+
+var backgroundErrorMessages = []string{
+	"Hark! The background '%s' is not in my chronicles.",
+	"Alas! The origin '%s' is lost to the ages.",
+	"By the gods! Such a background '%s' is not in my scrolls.",
+	"Fie! '%s' is not among my tales of heroes.",
+	"Confusion! The background '%s' evades my memory.",
+	"Oh no! '%s' is not in my adventurer's tales.",
+	"Zounds! '%s' baffles the greatest bards.",
+	"Egad! The background '%s' hath never been sung.",
+	"Goodness me! '%s' is as elusive as a shadow.",
+	"Heavens! '%s' is beyond my epic knowledge.",
+}
+
+var classErrorMessages = []string{
+	"Hark! The class '%s' is not in my spellbooks.",
+	"Alas! The vocation '%s' is unknown to me.",
+	"By the gods! Such a class '%s' is not in my teachings.",
+	"Fie! '%s' is not among the paths I've walked.",
+	"Confusion! The class '%s' eludes my wisdom.",
+	"Oh no! '%s' is not in my guild's lore.",
+	"Zounds! '%s' confounds the wisest mages.",
+	"Egad! The class '%s' hath never been chosen.",
+	"Goodness me! '%s' is as rare as a dragon's hoard.",
+	"Heavens! '%s' is beyond my arcane grasp.",
+}
+
+// getRandomErrorMessage returns a random error message.
+func getRandomErrorMessage() string {
+	rand.Seed(time.Now().UnixNano())
+	return errorMessages[rand.Intn(len(errorMessages))]
+}
+
+// getRandomSpellErrorMessage returns a random spell error message.
+func getRandomSpellErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(spellErrorMessages[rand.Intn(len(spellErrorMessages))], name)
+}
+
+// getRandomMonsterErrorMessage returns a random monster error message.
+func getRandomMonsterErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(monsterErrorMessages[rand.Intn(len(monsterErrorMessages))], name)
+}
+
+// getRandomItemErrorMessage returns a random item error message.
+func getRandomItemErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(itemErrorMessages[rand.Intn(len(itemErrorMessages))], name)
+}
+
+// getRandomSpeciesErrorMessage returns a random species error message.
+func getRandomSpeciesErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(speciesErrorMessages[rand.Intn(len(speciesErrorMessages))], name)
+}
+
+// getRandomBackgroundErrorMessage returns a random background error message.
+func getRandomBackgroundErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(backgroundErrorMessages[rand.Intn(len(backgroundErrorMessages))], name)
+}
+
+// getRandomClassErrorMessage returns a random class error message.
+func getRandomClassErrorMessage(name string) string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf(classErrorMessages[rand.Intn(len(classErrorMessages))], name)
+}
+
+// formatDescription formats long descriptions for better readability.
+func formatDescription(desc string) string {
+	// Add line breaks after sentences
+	desc = strings.ReplaceAll(desc, ". ", ".\n\n")
+	// Add line breaks before common section headers
+	headers := []string{
+		"Hit Points", "Proficiencies", "Armor", "Weapons", "Tools", "Saving Throws", "Skills", "Equipment",
+		"Spellcasting", "Cantrips", "Spellbook", "Preparing and Casting Spells", "Arcane Recovery",
+		"Arcane Tradition", "Ability Score Improvement", "Creating a", "Quick Build", "The Wizard Level",
+		"Class Features", "Creature Type", "Size", "Speed", "Flight", "Talons", "Wind Caller",
+		"Description", "Personality Trait", "Ideal", "Bond", "Flaw", "Backstory",
+	}
+	for _, h := range headers {
+		desc = strings.ReplaceAll(desc, h, "\n\n"+h)
+	}
+	return desc
+}
 
 type mainModel struct {
 	textInput   textinput.Model
 	viewport    viewport.Model
 	lastContent string
+	lastStyle   lipgloss.Style
 }
 
 type topModel struct {
@@ -41,10 +196,18 @@ type topModel struct {
 	height  int
 }
 
-// setWrappedContent sets the viewport content with word wrapping.
-func (m *mainModel) setWrappedContent(content string) {
+// setWrappedContent sets the viewport content with word wrapping and optional styling.
+func (m *mainModel) setWrappedContent(content string, style ...lipgloss.Style) {
 	m.lastContent = content
-	wrapped := lipgloss.NewStyle().Width(m.viewport.Width - 2).Render(content)
+	var s lipgloss.Style
+	if len(style) > 0 {
+		s = style[0]
+		m.lastStyle = s
+	} else {
+		s = outputStyle
+		m.lastStyle = outputStyle
+	}
+	wrapped := s.Width(m.viewport.Width - 2).Render(content)
 	m.viewport.SetContent(wrapped)
 }
 
@@ -80,9 +243,12 @@ Core Commands:
   roll <notation>     - Roll dice (e.g., roll 1d20, roll 2d6+3)
 
 Lookup Commands:
-  spell [name]        - Browse/filter spell list or look up specific spell
-  monster [name]      - Browse/filter monster list or look up specific monster
-  item [name]         - Browse/filter item list or look up specific item
+   spell [name]        - Browse/filter spell list or look up specific spell
+   monster [name]      - Browse/filter monster list or look up specific monster
+   item [name]         - Browse/filter item list or look up specific item
+   race [name]         - Browse/filter race list or look up specific race
+   background [name]   - Browse/filter background list or look up specific background
+   class [name]        - Browse/filter class list or look up specific class
 
 NPC Generation:
   npc [generate]      - Generate a random NPC
@@ -126,7 +292,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						notation := args[1]
 						dr, err := dice.ParseDiceNotation(notation)
 						if err != nil {
-							m.setWrappedContent(fmt.Sprintf("Error: %v", err))
+							m.setWrappedContent(fmt.Sprintf("Error: %v", err), errorStyle)
 						} else {
 							total, rolls := dr.Roll()
 							m.setWrappedContent(fmt.Sprintf("Rolling %s: %v -> Total: %d", dr.Notation, rolls, total))
@@ -140,7 +306,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						name := strings.Join(args[1:], " ")
 						spell, err := data.GetSpellByName(name)
 						if err != nil {
-							m.setWrappedContent(fmt.Sprintf("Hark! The spell '%s' is not etched in my scrolls.", name))
+							m.setWrappedContent(getRandomSpellErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
 							order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
@@ -149,7 +315,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 									content += fmt.Sprintf("%s: %v\n", key, v)
 								}
 							}
-							content += fmt.Sprintf("\nDescription:\n%s\n\n", spell.Description)
+							content += fmt.Sprintf("\nDescription:\n%s\n\n", formatDescription(spell.Description))
 							content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
 							m.setWrappedContent(content)
 						}
@@ -162,10 +328,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						name := strings.Join(args[1:], " ")
 						monster, err := data.GetMonsterByName(name)
 						if err != nil {
-							m.setWrappedContent(fmt.Sprintf("Hark! The beast '%s' is not known in these lands.", name))
+							m.setWrappedContent(getRandomMonsterErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
-							content += fmt.Sprintf("Description:\n%s\n", strings.ReplaceAll(monster.Description, ". ", ".\n\n"))
+							content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
 							m.setWrappedContent(content)
 						}
 					}
@@ -177,10 +343,55 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						name := strings.Join(args[1:], " ")
 						it, err := data.GetItemByName(name)
 						if err != nil {
-							m.setWrappedContent(fmt.Sprintf("Hark! The item '%s' is not in my treasure hoard.", name))
+							m.setWrappedContent(getRandomItemErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", it.Name)
-							content += fmt.Sprintf("Description:\n%s\n", strings.ReplaceAll(it.Description, ". ", ".\n\n"))
+							content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
+							m.setWrappedContent(content)
+						}
+					}
+				case "race":
+					if len(args) < 2 {
+						m.textInput.SetValue("")
+						return m, func() tea.Msg { return switchModeMsg{"fuzzy_race"} }
+					} else {
+						name := strings.Join(args[1:], " ")
+						species, err := data.GetSpeciesByName(name)
+						if err != nil {
+							m.setWrappedContent(getRandomSpeciesErrorMessage(name), errorStyle)
+						} else {
+							content := fmt.Sprintf("--- %s ---\n\n", species.Name)
+							content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
+							m.setWrappedContent(content)
+						}
+					}
+				case "background":
+					if len(args) < 2 {
+						m.textInput.SetValue("")
+						return m, func() tea.Msg { return switchModeMsg{"fuzzy_background"} }
+					} else {
+						name := strings.Join(args[1:], " ")
+						background, err := data.GetBackgroundByName(name)
+						if err != nil {
+							m.setWrappedContent(getRandomBackgroundErrorMessage(name), errorStyle)
+						} else {
+							content := fmt.Sprintf("--- %s ---\n\n", background.Name)
+							content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
+							m.setWrappedContent(content)
+						}
+					}
+				case "class":
+					if len(args) < 2 {
+						m.textInput.SetValue("")
+						return m, func() tea.Msg { return switchModeMsg{"fuzzy_class"} }
+					} else {
+						name := strings.Join(args[1:], " ")
+						class, err := data.GetClassByName(name)
+						if err != nil {
+							m.setWrappedContent(getRandomClassErrorMessage(name), errorStyle)
+						} else {
+							content := fmt.Sprintf("--- %s ---\n\n", class.Name)
+							content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
 							m.setWrappedContent(content)
 						}
 					}
@@ -190,10 +401,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						content := fmt.Sprintf("--- Generated NPC ---\n\nName: %s\nSpecies: %s\nBackground: %s\n\nPersonality Trait: %s\n\nIdeal: %s\n\nBond: %s\n\nFlaw: %s\n\nBackstory: %s\n", npc.Name, npc.Species, npc.Background, npc.PersonalityTrait, npc.Ideal, npc.Bond, npc.Flaw, npc.Backstory)
 						m.setWrappedContent(content)
 					} else {
-						m.setWrappedContent("Unknown npc subcommand.")
+						m.setWrappedContent("Unknown npc subcommand.", errorStyle)
 					}
 				default:
-					m.setWrappedContent("Hark! That command eludes my arcane senses. Type 'help' for available incantations.")
+					m.setWrappedContent(getRandomErrorMessage(), errorStyle)
 				}
 				m.textInput.SetValue("")
 			}
@@ -213,7 +424,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Width = msg.Width - 2
 		m.viewport.Height = msg.Height - 3
 		if m.lastContent != "" {
-			m.setWrappedContent(m.lastContent)
+			m.setWrappedContent(m.lastContent, m.lastStyle)
 		}
 
 	// We handle errors just like any other message
@@ -267,6 +478,18 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fm := newFuzzyModel("item")
 			fm.list.SetSize(m.width, m.height-2)
 			m.current = fm
+		case "fuzzy_race":
+			fm := newFuzzyModel("race")
+			fm.list.SetSize(m.width, m.height-2)
+			m.current = fm
+		case "fuzzy_background":
+			fm := newFuzzyModel("background")
+			fm.list.SetSize(m.width, m.height-2)
+			m.current = fm
+		case "fuzzy_class":
+			fm := newFuzzyModel("class")
+			fm.list.SetSize(m.width, m.height-2)
+			m.current = fm
 		}
 		return m, nil
 	case selectedMsg:
@@ -277,7 +500,7 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "spell":
 			spell, err := data.GetSpellByName(msg.name)
 			if err != nil {
-				mm.setWrappedContent(fmt.Sprintf("Hark! The spell '%s' is not etched in my scrolls.", msg.name))
+				mm.setWrappedContent(getRandomSpellErrorMessage(msg.name), errorStyle)
 			} else {
 				content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
 				order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
@@ -286,26 +509,53 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						content += fmt.Sprintf("%s: %v\n", key, v)
 					}
 				}
-				content += fmt.Sprintf("\nDescription:\n%s\n\n", spell.Description)
+				content += fmt.Sprintf("\nDescription:\n%s\n\n", formatDescription(spell.Description))
 				content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
 				mm.setWrappedContent(content)
 			}
 		case "monster":
 			monster, err := data.GetMonsterByName(msg.name)
 			if err != nil {
-				mm.setWrappedContent(fmt.Sprintf("Hark! The beast '%s' is not known in these lands.", msg.name))
+				mm.setWrappedContent(getRandomMonsterErrorMessage(msg.name), errorStyle)
 			} else {
 				content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
-				content += fmt.Sprintf("Description:\n%s\n", strings.ReplaceAll(monster.Description, ". ", ".\n\n"))
+				content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
 				mm.setWrappedContent(content)
 			}
 		case "item":
 			it, err := data.GetItemByName(msg.name)
 			if err != nil {
-				mm.setWrappedContent(fmt.Sprintf("Hark! The item '%s' is not in my treasure hoard.", msg.name))
+				mm.setWrappedContent(getRandomItemErrorMessage(msg.name), errorStyle)
 			} else {
 				content := fmt.Sprintf("--- %s ---\n\n", it.Name)
-				content += fmt.Sprintf("Description:\n%s\n", strings.ReplaceAll(it.Description, ". ", ".\n\n"))
+				content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
+				mm.setWrappedContent(content)
+			}
+		case "race":
+			species, err := data.GetSpeciesByName(msg.name)
+			if err != nil {
+				mm.setWrappedContent(getRandomSpeciesErrorMessage(msg.name), errorStyle)
+			} else {
+				content := fmt.Sprintf("--- %s ---\n\n", species.Name)
+				content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
+				mm.setWrappedContent(content)
+			}
+		case "background":
+			background, err := data.GetBackgroundByName(msg.name)
+			if err != nil {
+				mm.setWrappedContent(getRandomBackgroundErrorMessage(msg.name), errorStyle)
+			} else {
+				content := fmt.Sprintf("--- %s ---\n\n", background.Name)
+				content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
+				mm.setWrappedContent(content)
+			}
+		case "class":
+			class, err := data.GetClassByName(msg.name)
+			if err != nil {
+				mm.setWrappedContent(getRandomClassErrorMessage(msg.name), errorStyle)
+			} else {
+				content := fmt.Sprintf("--- %s ---\n\n", class.Name)
+				content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
 				mm.setWrappedContent(content)
 			}
 		}
@@ -426,6 +676,27 @@ func newFuzzyModel(mode string) fuzzyModel {
 			if !seen[i.Name] {
 				items = append(items, listItem{title: i.Name})
 				seen[i.Name] = true
+			}
+		}
+	case "race":
+		for _, r := range data.AllSpecies {
+			if !seen[r.Name] {
+				items = append(items, listItem{title: r.Name})
+				seen[r.Name] = true
+			}
+		}
+	case "background":
+		for _, b := range data.AllBackgrounds {
+			if !seen[b.Name] {
+				items = append(items, listItem{title: b.Name})
+				seen[b.Name] = true
+			}
+		}
+	case "class":
+		for _, c := range data.AllClasses {
+			if !seen[c.Name] {
+				items = append(items, listItem{title: c.Name})
+				seen[c.Name] = true
 			}
 		}
 	}

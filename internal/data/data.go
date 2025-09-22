@@ -44,6 +44,12 @@ type Background struct {
 	Description string `json:"description"`
 }
 
+// Class represents the structure of a class from classes.json
+type Class struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 // Global store for loaded data
 var (
 	AllSpells      []Spell
@@ -51,6 +57,7 @@ var (
 	AllItems       []Item
 	AllSpecies     []Species
 	AllBackgrounds []Background
+	AllClasses     []Class
 )
 
 // LoadData loads all necessary JSON data into memory
@@ -83,6 +90,12 @@ func LoadData(dataPath string) error {
 	err = loadJSONFile(filepath.Join(dataPath, "backgrounds.json"), &AllBackgrounds)
 	if err != nil {
 		return fmt.Errorf("failed to load backgrounds data: %w", err)
+	}
+
+	// Load Classes
+	err = loadJSONFile(filepath.Join(dataPath, "classes.json"), &AllClasses)
+	if err != nil {
+		return fmt.Errorf("failed to load classes data: %w", err)
 	}
 
 	return nil
@@ -157,6 +170,17 @@ func GetBackgroundByName(name string) (*Background, error) {
 		}
 	}
 	return nil, fmt.Errorf("background '%s' not found", name)
+}
+
+// GetClassByName searches for a class by its name (case-insensitive)
+func GetClassByName(name string) (*Class, error) {
+	lowerName := strings.ToLower(name)
+	for _, class := range AllClasses {
+		if strings.ToLower(class.Name) == lowerName {
+			return &class, nil
+		}
+	}
+	return nil, fmt.Errorf("class '%s' not found", name)
 }
 
 // NPC represents a generated non-player character
