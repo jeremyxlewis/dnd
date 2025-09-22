@@ -37,3 +37,6 @@ dnd
 
 # Data files if not committed or large
 # data/
+
+# PRD file
+prd.md
