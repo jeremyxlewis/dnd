@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"strings"
@@ -11,228 +10,86 @@ import (
 	"dnd-cli/internal/data"
 	"dnd-cli/internal/dice"
 
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	cursorStyle  = focusedStyle.Copy()
-
-	noStyle = lipgloss.NewStyle()
-
-	headerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Background(lipgloss.Color("236")).Padding(0, 1).Bold(true)
-	promptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	quitStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
-	outputStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Padding(0, 1)
-	errorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Padding(0, 1) // Red for errors
-)
-
-var errorMessages = []string{
-	"Hark! That command eludes my arcane senses. Type 'help' for available incantations.",
-	"Alas! Thy words are shrouded in mystery. Seek 'help' to unveil the secrets.",
-	"By the gods! Such a command is unknown to me. Whisper 'help' for guidance.",
-	"Fie! That incantation is not in my grimoire. Type 'help' to see the spells I know.",
-	"Confusion reigns! Thy command is lost in the mists. 'Help' shall light the way.",
-	"Oh no! My magical ears have failed me. Try 'help' for the proper enchantments.",
-	"Zounds! That directive baffles even the wisest sages. 'Help' is thy ally.",
-	"Egad! Such a command hath never graced my presence. 'Help' awaits thy call.",
-	"Goodness me! Thy input is as enigmatic as a dragon's riddle. Seek 'help'.",
-	"Heavens! That order is beyond my ken. 'Help' will reveal the path forward.",
-}
-
-var spellErrorMessages = []string{
-	"Hark! The spell '%s' is not etched in my scrolls.",
-	"Alas! The incantation '%s' remains a mystery to me.",
-	"By the gods! Such a spell '%s' is unknown in these realms.",
-	"Fie! '%s' is not inscribed in my ancient tomes.",
-	"Confusion! The spell '%s' eludes my magical sight.",
-	"Oh no! '%s' is not among the spells I wield.",
-	"Zounds! '%s' baffles even the greatest wizards.",
-	"Egad! The spell '%s' hath never been cast here.",
-	"Goodness me! '%s' is as elusive as a shadow.",
-	"Heavens! '%s' is beyond my arcane knowledge.",
-}
-
-var monsterErrorMessages = []string{
-	"Hark! The beast '%s' is not known in these lands.",
-	"Alas! The creature '%s' lurks not in my bestiaries.",
-	"By the gods! Such a monster '%s' is unheard of.",
-	"Fie! '%s' is not among the beasts I've encountered.",
-	"Confusion! The monster '%s' hides from my gaze.",
-	"Oh no! '%s' is not in the wilds I know.",
-	"Zounds! '%s' confounds the bravest adventurers.",
-	"Egad! The beast '%s' hath never crossed my path.",
-	"Goodness me! '%s' is as mythical as a unicorn.",
-	"Heavens! '%s' is unknown to mortal ken.",
-}
-
-var itemErrorMessages = []string{
-	"Hark! The item '%s' is not in my treasure hoard.",
-	"Alas! The artifact '%s' is lost to the ages.",
-	"By the gods! Such an item '%s' is not in my vaults.",
-	"Fie! '%s' is not among my glittering treasures.",
-	"Confusion! The item '%s' evades my collection.",
-	"Oh no! '%s' is not in my adventurer's pack.",
-	"Zounds! '%s' baffles the greediest dragons.",
-	"Egad! The item '%s' hath never been hoarded.",
-	"Goodness me! '%s' is as rare as a philosopher's stone.",
-	"Heavens! '%s' is beyond my material grasp.",
-}
-
-var speciesErrorMessages = []string{
-	"Hark! The species '%s' is not known in these realms.",
-	"Alas! The race '%s' lurks not in my tomes.",
-	"By the gods! Such a species '%s' is unheard of.",
-	"Fie! '%s' is not among the races I've encountered.",
-	"Confusion! The species '%s' hides from my gaze.",
-	"Oh no! '%s' is not in the wilds I know.",
-	"Zounds! '%s' confounds the bravest adventurers.",
-	"Egad! The race '%s' hath never crossed my path.",
-	"Goodness me! '%s' is as mythical as a unicorn.",
-	"Heavens! '%s' is unknown to mortal ken.",
-}
-
-var backgroundErrorMessages = []string{
-	"Hark! The background '%s' is not in my chronicles.",
-	"Alas! The origin '%s' is lost to the ages.",
-	"By the gods! Such a background '%s' is not in my scrolls.",
-	"Fie! '%s' is not among my tales of heroes.",
-	"Confusion! The background '%s' evades my memory.",
-	"Oh no! '%s' is not in my adventurer's tales.",
-	"Zounds! '%s' baffles the greatest bards.",
-	"Egad! The background '%s' hath never been sung.",
-	"Goodness me! '%s' is as elusive as a shadow.",
-	"Heavens! '%s' is beyond my epic knowledge.",
-}
-
-var classErrorMessages = []string{
-	"Hark! The class '%s' is not in my spellbooks.",
-	"Alas! The vocation '%s' is unknown to me.",
-	"By the gods! Such a class '%s' is not in my teachings.",
-	"Fie! '%s' is not among the paths I've walked.",
-	"Confusion! The class '%s' eludes my wisdom.",
-	"Oh no! '%s' is not in my guild's lore.",
-	"Zounds! '%s' confounds the wisest mages.",
-	"Egad! The class '%s' hath never been chosen.",
-	"Goodness me! '%s' is as rare as a dragon's hoard.",
-	"Heavens! '%s' is beyond my arcane grasp.",
-}
-
-// getRandomErrorMessage returns a random error message.
-func getRandomErrorMessage() string {
+func init() {
 	rand.Seed(time.Now().UnixNano())
-	return errorMessages[rand.Intn(len(errorMessages))]
 }
 
-// getRandomSpellErrorMessage returns a random spell error message.
-func getRandomSpellErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(spellErrorMessages[rand.Intn(len(spellErrorMessages))], name)
-}
-
-// getRandomMonsterErrorMessage returns a random monster error message.
-func getRandomMonsterErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(monsterErrorMessages[rand.Intn(len(monsterErrorMessages))], name)
-}
-
-// getRandomItemErrorMessage returns a random item error message.
-func getRandomItemErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(itemErrorMessages[rand.Intn(len(itemErrorMessages))], name)
-}
-
-// getRandomSpeciesErrorMessage returns a random species error message.
-func getRandomSpeciesErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(speciesErrorMessages[rand.Intn(len(speciesErrorMessages))], name)
-}
-
-// getRandomBackgroundErrorMessage returns a random background error message.
-func getRandomBackgroundErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(backgroundErrorMessages[rand.Intn(len(backgroundErrorMessages))], name)
-}
-
-// getRandomClassErrorMessage returns a random class error message.
-func getRandomClassErrorMessage(name string) string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf(classErrorMessages[rand.Intn(len(classErrorMessages))], name)
-}
-
-// formatDescription formats long descriptions for better readability.
-func formatDescription(desc string) string {
-	// Add line breaks after sentences
-	desc = strings.ReplaceAll(desc, ". ", ".\n\n")
-	// Add line breaks before common section headers
-	headers := []string{
-		"Hit Points", "Proficiencies", "Armor", "Weapons", "Tools", "Saving Throws", "Skills", "Equipment",
-		"Spellcasting", "Cantrips", "Spellbook", "Preparing and Casting Spells", "Arcane Recovery",
-		"Arcane Tradition", "Ability Score Improvement", "Creating a", "Quick Build", "The Wizard Level",
-		"Class Features", "Creature Type", "Size", "Speed", "Flight", "Talons", "Wind Caller",
-		"Description", "Personality Trait", "Ideal", "Bond", "Flaw", "Backstory",
-	}
-	for _, h := range headers {
-		desc = strings.ReplaceAll(desc, h, "\n\n"+h)
-	}
-	return desc
-}
-
+// mainModel represents the main command-line interface model.
+// mainModel represents the main command-line interface model.
 type mainModel struct {
-	textInput   textinput.Model
-	viewport    viewport.Model
-	lastContent string
-	lastStyle   lipgloss.Style
+	textInput    textinput.Model
+	viewport     viewport.Model
+	lastContent  string
+	lastStyle    lipgloss.Style
+	width        int
+	height       int
+	history      []string
+	historyIndex int
+	prevValue    string
+	status       string
 }
 
+// topModel is the top-level model that manages switching between different sub-models.
 type topModel struct {
-	current tea.Model
-	width   int
-	height  int
+	current    tea.Model
+	width      int
+	height     int
+	ctrlCCount int
 }
 
 // setWrappedContent sets the viewport content with word wrapping and optional styling.
 func (m *mainModel) setWrappedContent(content string, style ...lipgloss.Style) {
 	m.lastContent = content
-	var s lipgloss.Style
+	m.lastStyle = outputStyle
+	var wrapped string
 	if len(style) > 0 {
-		s = style[0]
+		s := style[0]
 		m.lastStyle = s
+		// For styled content, wrap to inner width first
+		innerWidth := m.viewport.Width - 4 // border 2, padding 2
+		wrappedContent := lipgloss.NewStyle().Width(innerWidth).Render(content)
+		wrapped = s.Render(wrappedContent)
 	} else {
-		s = outputStyle
-		m.lastStyle = outputStyle
+		s := outputStyle
+		wrapped = s.Width(m.viewport.Width).Render(content)
 	}
-	wrapped := s.Width(m.viewport.Width - 2).Render(content)
 	m.viewport.SetContent(wrapped)
 }
 
-// newMainModel creates a new instance of the main TUI model.
-func newMainModel() mainModel {
+// newMainModel creates a new instance of the main TUI model with the given dimensions.
+func newMainModel(width, height int) mainModel {
 	ti := textinput.New()
 	ti.Placeholder = "Type something..."
 	ti.Focus()
-	ti.CharLimit = 156
-	ti.Width = 40
+	ti.CharLimit = TextInputCharLimit
+	ti.Width = TextInputWidth
 	ti.PromptStyle = focusedStyle
 	ti.TextStyle = focusedStyle
 	ti.Cursor.Style = cursorStyle
 
-	vp := viewport.New(78, 20) // Initial size, adjusted on resize
+	vp := viewport.New(width-ViewportWidthPadding, height-ViewportHeightPadding) // account for border/padding
 
 	return mainModel{
-		textInput: ti,
-		viewport:  vp,
+		textInput:    ti,
+		viewport:     vp,
+		width:        width,
+		height:       height,
+		history:      []string{},
+		historyIndex: 0,
+		prevValue:    "",
+		status:       "Ready. Type 'help' or '?' for commands.",
 	}
 }
 
-// NewModel creates the top-level TUI model.
+// NewModel creates the top-level TUI model with default dimensions.
 func NewModel() topModel {
-	return topModel{current: newMainModel(), width: 80, height: 24}
+	return topModel{current: newMainModel(DefaultWidth, DefaultHeight), width: DefaultWidth, height: DefaultHeight}
 }
 
 // getHelpText returns a formatted help text for the TUI.
@@ -240,24 +97,43 @@ func getHelpText() string {
 	return `Available Commands:
 
 Core Commands:
-  roll <notation>     - Roll dice (e.g., roll 1d20, roll 2d6+3)
+   roll <notation>     - Roll dice (e.g., roll 1d20, roll 2d6+3)
 
-Lookup Commands:
-   spell [name]        - Browse/filter spell list or look up specific spell
-   monster [name]      - Browse/filter monster list or look up specific monster
-   item [name]         - Browse/filter item list or look up specific item
-   race [name]         - Browse/filter race list or look up specific race
-   background [name]   - Browse/filter background list or look up specific background
-   class [name]        - Browse/filter class list or look up specific class
+ Lookup Commands:
+     search [query]      - Global fuzzy search across all categories (spells, monsters, items, races, backgrounds, classes, rules)
+     spell [name]        - Browse/filter spell list or look up specific spell
+     monster [name]      - Browse/filter monster list or look up specific monster
+     item [name]         - Browse/filter item list or look up specific item
+     race [name]         - Browse/filter race list or look up specific race
+     background [name]   - Browse/filter background list or look up specific background
+     class [name]        - Browse/filter class list or look up specific class
+     rules [topic]       - Look up PHB rules (combat, conditions, ability checks, etc.)
+
+ Character Management (Full PHB Support):
+    char create         - Create a new character interactively in TUI (ability scores, all races/classes/backgrounds)
+    char view <name>    - View a character's full details
+    char levelup <name> - Level up a character with proper mechanics
+    char hp <name> <action> <amount> - Manage HP (damage/heal/set)
+    char spells <name> <action> <level> <amount> - Manage spell slots (use/restore)
+    char inventory <name> <action> <item> - Manage inventory (add/remove)
+    char condition <name> <action> <condition> - Manage conditions (add/remove)
+    char edit <name> <field> <value> - Edit character details (alignment/backstory)
+
+ Combat & DM Tools:
+    combat              - Launch initiative tracker for managing combat turns, HP, and conditions
 
 NPC Generation:
-  npc [generate]      - Generate a random NPC
+   npc [generate]      - Generate a random NPC
 
 Other:
-  help or ?           - Show this help message
+   help or ?           - Show this help message
+
+Keyboard Shortcuts:
+   Ctrl+H              - Show help
+   Ctrl+C              - Quit
 
 In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
-Press Esc or Ctrl+C to quit the TUI.`
+Press Ctrl+C twice to quit the TUI. Use ↑/↓ to scroll output.`
 }
 
 // Init initializes the main TUI model. It can return a command to perform initial actions.
@@ -274,8 +150,20 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyEnter:
 			input := m.textInput.Value()
+			if input != "" {
+				// Add to history if not duplicate of last
+				if len(m.history) == 0 || m.history[len(m.history)-1] != input {
+					m.history = append(m.history, input)
+					// Limit to HistoryLimit
+					if len(m.history) > HistoryLimit {
+						m.history = m.history[1:]
+					}
+				}
+				m.historyIndex = len(m.history)
+			}
 			if input == "help" || input == "?" {
 				m.setWrappedContent(getHelpText())
+				m.status = "Help displayed. Use ↑/↓ to scroll."
 				m.textInput.SetValue("")
 			} else if input != "" {
 				args := strings.Fields(input)
@@ -295,7 +183,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(fmt.Sprintf("Error: %v", err), errorStyle)
 						} else {
 							total, rolls := dr.Roll()
-							m.setWrappedContent(fmt.Sprintf("Rolling %s: %v -> Total: %d", dr.Notation, rolls, total))
+							content := fmt.Sprintf("Rolling %s\n\nRolls: %v\n\nTotal: %d", dr.Notation, rolls, total)
+							m.setWrappedContent(content, rollStyle)
 						}
 					}
 				case "spell":
@@ -310,14 +199,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
 							order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
-							for _, key := range order {
-								if v, ok := spell.Properties[key]; ok {
-									content += fmt.Sprintf("%s: %v\n", key, v)
-								}
-							}
-							content += fmt.Sprintf("\nDescription:\n%s\n\n", formatDescription(spell.Description))
+							content += renderPropertiesTable(spell.Properties, order)
+							content += fmt.Sprintf("\n\nDescription:\n%s\n\n", formatDescription(spell.Description))
 							content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
 				case "monster":
@@ -332,7 +217,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
 							content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
 				case "item":
@@ -347,7 +232,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", it.Name)
 							content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
 				case "race":
@@ -362,7 +247,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", species.Name)
 							content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
 				case "background":
@@ -377,7 +262,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", background.Name)
 							content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
 				case "class":
@@ -392,16 +277,42 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", class.Name)
 							content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
-							m.setWrappedContent(content)
+							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
+				case "rules":
+					if len(args) < 2 {
+						m.textInput.SetValue("")
+						return m, func() tea.Msg { return switchModeMsg{"fuzzy_rules"} }
+					} else {
+						topic := strings.ToLower(strings.Join(args[1:], " "))
+						if desc, ok := rules[topic]; ok {
+							content := fmt.Sprintf("--- %s ---\n\n%s", strings.Title(topic), formatDescription(desc))
+							m.setWrappedContent(content, infoCardStyle)
+						} else {
+							m.setWrappedContent(fmt.Sprintf("Hark! No rules for '%s'. Available: combat, conditions, ability checks, initiative, actions.", topic), errorStyle)
+						}
+					}
+				case "search":
+					m.textInput.SetValue("")
+					return m, func() tea.Msg { return switchModeMsg{"fuzzy_global"} }
+				case "combat":
+					m.textInput.SetValue("")
+					return m, func() tea.Msg { return switchModeMsg{"initiative_tracker"} }
 				case "npc":
 					if len(args) < 2 || args[1] == "generate" {
 						npc := data.GenerateNPC()
 						content := fmt.Sprintf("--- Generated NPC ---\n\nName: %s\nSpecies: %s\nBackground: %s\n\nPersonality Trait: %s\n\nIdeal: %s\n\nBond: %s\n\nFlaw: %s\n\nBackstory: %s\n", npc.Name, npc.Species, npc.Background, npc.PersonalityTrait, npc.Ideal, npc.Bond, npc.Flaw, npc.Backstory)
-						m.setWrappedContent(content)
+						m.setWrappedContent(infoCardStyle.Render(content))
 					} else {
 						m.setWrappedContent("Unknown npc subcommand.", errorStyle)
+					}
+				case "char":
+					if len(args) >= 2 && args[1] == "create" {
+						m.textInput.SetValue("")
+						return m, func() tea.Msg { return switchModeMsg{"char_create"} }
+					} else {
+						m.setWrappedContent("Usage: char create", errorStyle)
 					}
 				default:
 					m.setWrappedContent(getRandomErrorMessage(), errorStyle)
@@ -409,20 +320,31 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput.SetValue("")
 			}
 		case tea.KeyUp:
-			m.viewport.LineUp(1)
+			if len(m.history) > 0 && m.historyIndex > 0 {
+				m.historyIndex--
+				m.textInput.SetValue(m.history[m.historyIndex])
+			}
 		case tea.KeyDown:
-			m.viewport.LineDown(1)
+			if m.historyIndex < len(m.history)-1 {
+				m.historyIndex++
+				m.textInput.SetValue(m.history[m.historyIndex])
+			} else if m.historyIndex == len(m.history)-1 || m.historyIndex == len(m.history) {
+				m.historyIndex = len(m.history)
+				m.textInput.SetValue("")
+			}
+		case tea.KeyEsc:
+			return m, tea.Quit
 		case tea.KeyPgUp:
 			m.viewport.HalfViewUp()
 		case tea.KeyPgDown:
 			m.viewport.HalfViewDown()
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
 		}
 
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width - 2
-		m.viewport.Height = msg.Height - 3
+		m.width = msg.Width
+		m.height = msg.Height
+		m.viewport.Width = msg.Width - ViewportWidthPadding // account for border/padding
+		m.viewport.Height = msg.Height - ViewportHeightPadding
 		if m.lastContent != "" {
 			m.setWrappedContent(m.lastContent, m.lastStyle)
 		}
@@ -434,18 +356,24 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
+	if m.textInput.Value() != m.prevValue {
+		m.historyIndex = len(m.history)
+	}
+	m.prevValue = m.textInput.Value()
 	return m, cmd
 }
 
 // View renders the UI.
 func (m mainModel) View() string {
-	s := outputStyle.Render(m.viewport.View()) + "\n"
+	viewportContent := m.viewport.View()
 
-	s += promptStyle.Render("What is thy command, adventurer?") + "\n"
-	s += m.textInput.View()
-	s += quitStyle.Render("\nPress Esc or Ctrl+C to quit. Use ↑/↓ to scroll output.")
+	promptSection := lipgloss.JoinVertical(lipgloss.Left,
+		promptStyle.Render("What is thy command, adventurer?"),
+		m.textInput.View(),
+		quitStyle.Render("Press Ctrl+C twice to quit. Use ↑/↓ to scroll output."),
+	)
 
-	return s
+	return lipgloss.JoinVertical(lipgloss.Left, viewportContent, promptSection)
 }
 
 // topModel methods
@@ -458,14 +386,13 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case switchModeMsg:
+		m.ctrlCCount = 0
 		switch msg.mode {
 		case "main":
-			mm := newMainModel()
-			mm.viewport.Width = m.width - 2
-			mm.viewport.Height = m.height - 3
+			mm := newMainModel(m.width, m.height)
 			m.current = mm
 		case "char_create":
-			m.current = newCharCreateModel()
+			m.current = newCharCreateModel(m.width, m.height)
 		case "fuzzy_spell":
 			fm := newFuzzyModel("spell")
 			fm.list.SetSize(m.width, m.height-2)
@@ -490,89 +417,85 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fm := newFuzzyModel("class")
 			fm.list.SetSize(m.width, m.height-2)
 			m.current = fm
+		case "fuzzy_rules":
+			fm := newFuzzyModel("rules")
+			fm.list.SetSize(m.width, m.height-2)
+			m.current = fm
+		case "fuzzy_global":
+			fm := newFuzzyModel("global")
+			fm.list.SetSize(m.width, m.height-2)
+			m.current = fm
+		case "initiative_tracker":
+			it := newInitiativeTracker(m.width, m.height)
+			m.current = it
 		}
 		return m, nil
 	case selectedMsg:
-		mm := newMainModel()
-		mm.viewport.Width = m.width - 2
-		mm.viewport.Height = m.height - 3
-		switch msg.mode {
-		case "spell":
-			spell, err := data.GetSpellByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomSpellErrorMessage(msg.name), errorStyle)
+		m.ctrlCCount = 0
+		mm := newMainModel(m.width, m.height)
+		if msg.mode == "global" {
+			// Parse "Category: Name"
+			parts := strings.SplitN(msg.name, ": ", 2)
+			if len(parts) != 2 {
+				mm.setWrappedContent("Invalid global search result.", errorStyle)
 			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
-				order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
-				for _, key := range order {
-					if v, ok := spell.Properties[key]; ok {
-						content += fmt.Sprintf("%s: %v\n", key, v)
-					}
-				}
-				content += fmt.Sprintf("\nDescription:\n%s\n\n", formatDescription(spell.Description))
-				content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
-				mm.setWrappedContent(content)
+				category := strings.ToLower(parts[0])
+				name := parts[1]
+				displayItem(&mm, category, name)
 			}
-		case "monster":
-			monster, err := data.GetMonsterByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomMonsterErrorMessage(msg.name), errorStyle)
-			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
-				content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
-				mm.setWrappedContent(content)
-			}
-		case "item":
-			it, err := data.GetItemByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomItemErrorMessage(msg.name), errorStyle)
-			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", it.Name)
-				content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
-				mm.setWrappedContent(content)
-			}
-		case "race":
-			species, err := data.GetSpeciesByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomSpeciesErrorMessage(msg.name), errorStyle)
-			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", species.Name)
-				content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
-				mm.setWrappedContent(content)
-			}
-		case "background":
-			background, err := data.GetBackgroundByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomBackgroundErrorMessage(msg.name), errorStyle)
-			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", background.Name)
-				content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
-				mm.setWrappedContent(content)
-			}
-		case "class":
-			class, err := data.GetClassByName(msg.name)
-			if err != nil {
-				mm.setWrappedContent(getRandomClassErrorMessage(msg.name), errorStyle)
-			} else {
-				content := fmt.Sprintf("--- %s ---\n\n", class.Name)
-				content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
-				mm.setWrappedContent(content)
-			}
+		} else {
+			displayItem(&mm, msg.mode, msg.name)
 		}
 		m.current = mm
 		return m, nil
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyCtrlC:
+			m.ctrlCCount++
+			if m.ctrlCCount == 1 {
+				if mm, ok := m.current.(*mainModel); ok {
+					mm.status = "Press Ctrl+C again to quit."
+				}
+				return m, nil
+			} else {
+				return m, tea.Quit
+			}
+		case tea.KeyCtrlH:
+			m.ctrlCCount = 0
+			// Display help in main model
+			if mm, ok := m.current.(*mainModel); ok {
+				mm.setWrappedContent(getHelpText())
+				mm.status = "Help displayed. Press Esc to return."
+			}
+			return m, nil
+		default:
+			m.ctrlCCount = 0
+			// Pass to current model
+			m.current, cmd = m.current.Update(msg)
+			return m, cmd
+		}
 	case tea.WindowSizeMsg:
+		m.ctrlCCount = 0
 		m.width = msg.Width
 		m.height = msg.Height
 		// Update current model if it has size
 		if mm, ok := m.current.(*mainModel); ok {
-			mm.viewport.Width = msg.Width - 2
-			mm.viewport.Height = msg.Height - 3
+			mm.viewport.Width = msg.Width - ViewportWidthPadding
+			mm.viewport.Height = msg.Height - ViewportHeightPadding
 		} else if fm, ok := m.current.(*fuzzyModel); ok {
-			fm.list.SetSize(msg.Width, msg.Height-2)
+			fm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
+		} else if cm, ok := m.current.(*charCreateModel); ok {
+			cm.width = msg.Width
+			cm.height = msg.Height
+			cm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
+		} else if it, ok := m.current.(*initiativeTracker); ok {
+			it.width = msg.Width
+			it.height = msg.Height
+			it.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
 		}
 		return m, nil
 	default:
+		m.ctrlCCount = 0
 		m.current, cmd = m.current.Update(msg)
 		return m, cmd
 	}
@@ -584,167 +507,95 @@ func (m topModel) View() string {
 
 // switchModeMsg is used to switch between different TUI modes.
 type switchModeMsg struct {
-	mode string
+	mode string // The mode to switch to (e.g., "main", "fuzzy_spell")
 }
 
 // selectedMsg is sent when an item is selected from fuzzy finder.
 type selectedMsg struct {
-	mode string
-	name string
+	mode string // The mode (e.g., "spell", "monster") or "global"
+	name string // The selected item name
 }
 
-// listItem represents a list item for fuzzy finder.
-type listItem struct {
-	title string
-}
-
-func (i listItem) FilterValue() string { return i.title }
-
-// customDelegate for rendering list items.
-type customDelegate struct{}
-
-func (d customDelegate) Height() int { return 1 }
-
-func (d customDelegate) Spacing() int { return 0 }
-
-func (d customDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-
-func (d customDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	li, ok := item.(listItem)
-	if !ok {
-		return
-	}
-	if index == m.Index() {
-		fmt.Fprint(w, "> "+li.title)
-	} else {
-		fmt.Fprint(w, "  "+li.title)
-	}
-}
-
-// charCreateModel handles the character creation mode.
-type charCreateModel struct{}
-
-func newCharCreateModel() charCreateModel {
-	return charCreateModel{}
-}
-
-func (m charCreateModel) Init() tea.Cmd {
-	return nil
-}
-
-func (m charCreateModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEsc {
-			return m, func() tea.Msg { return switchModeMsg{"main"} }
-		}
-	}
-	return m, nil
-}
-
-func (m charCreateModel) View() string {
-	return "Character Creation Mode\n\nThis is a placeholder. Press Esc to return to main."
-}
-
-// fuzzyModel handles fuzzy finding for spells, monsters, items.
-type fuzzyModel struct {
-	list  list.Model
-	mode  string
-	width int
-}
-
-func newFuzzyModel(mode string) fuzzyModel {
-	var items []list.Item
-	seen := make(map[string]bool)
-	switch mode {
+// displayItem displays the content for a given category and name in the main model.
+// It handles fetching data and formatting for spells, monsters, items, races, backgrounds, classes, and rules.
+func displayItem(mm *mainModel, category, name string) {
+	switch category {
 	case "spell":
-		for _, s := range data.AllSpells {
-			if !seen[s.Name] {
-				items = append(items, listItem{title: s.Name})
-				seen[s.Name] = true
-			}
+		spell, err := data.GetSpellByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomSpellErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
+			order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
+			content += renderPropertiesTable(spell.Properties, order)
+			content += fmt.Sprintf("\n\nDescription:\n%s\n\n", formatDescription(spell.Description))
+			content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
+			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "monster":
-		for _, m := range data.AllMonsters {
-			if !seen[m.Name] {
-				items = append(items, listItem{title: m.Name})
-				seen[m.Name] = true
-			}
+		monster, err := data.GetMonsterByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomMonsterErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
+			content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
+			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "item":
-		for _, i := range data.AllItems {
-			if !seen[i.Name] {
-				items = append(items, listItem{title: i.Name})
-				seen[i.Name] = true
-			}
+		it, err := data.GetItemByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomItemErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", it.Name)
+			content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
+			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "race":
-		for _, r := range data.AllSpecies {
-			if !seen[r.Name] {
-				items = append(items, listItem{title: r.Name})
-				seen[r.Name] = true
-			}
+		species, err := data.GetSpeciesByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomSpeciesErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", species.Name)
+			content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
+			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "background":
-		for _, b := range data.AllBackgrounds {
-			if !seen[b.Name] {
-				items = append(items, listItem{title: b.Name})
-				seen[b.Name] = true
-			}
+		background, err := data.GetBackgroundByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomBackgroundErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", background.Name)
+			content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
+			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "class":
-		for _, c := range data.AllClasses {
-			if !seen[c.Name] {
-				items = append(items, listItem{title: c.Name})
-				seen[c.Name] = true
-			}
+		class, err := data.GetClassByName(name)
+		if err != nil {
+			mm.setWrappedContent(getRandomClassErrorMessage(name), errorStyle)
+		} else {
+			content := fmt.Sprintf("--- %s ---\n\n", class.Name)
+			content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
+			mm.setWrappedContent(content, infoCardStyle)
 		}
+	case "rules":
+		if desc, ok := rules[name]; ok {
+			content := fmt.Sprintf("--- %s ---\n\n%s", strings.Title(name), formatDescription(desc))
+			mm.setWrappedContent(content, infoCardStyle)
+		} else {
+			mm.setWrappedContent("Unknown rules topic.", errorStyle)
+		}
+	default:
+		mm.setWrappedContent("Unknown category.", errorStyle)
 	}
-	l := list.New(items, customDelegate{}, 80, 20) // initial size
-	l.Title = "Select " + mode
-	l.SetFilteringEnabled(true)
-	l.SetShowFilter(true)
-	return fuzzyModel{list: l, mode: mode, width: 80}
 }
 
-func (m fuzzyModel) Init() tea.Cmd {
-	return nil
-}
-
-func (m fuzzyModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		height := msg.Height - 4
-		if height < 10 {
-			height = 10
-		}
-		m.list.SetSize(msg.Width, height)
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			selected := m.list.SelectedItem()
-			if selected != nil {
-				name := selected.(listItem).title
-				return m, func() tea.Msg { return selectedMsg{mode: m.mode, name: name} }
-			}
-		} else if msg.Type == tea.KeyEsc {
-			return m, func() tea.Msg { return switchModeMsg{"main"} }
-		}
-	}
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	return m, cmd
-}
-
-func (m fuzzyModel) View() string {
-	return m.list.View()
-}
-
-// errMsg is a custom error type for our TUI.
+// errMsg is a custom error type for our TUI (currently unused).
 type errMsg error
 
-// StartTUI runs the Bubble Tea application.
+// StartTUI runs the Bubble Tea application for the D&D CLI TUI.
 func StartTUI() {
+	config := LoadConfig()
+	ApplyTheme(config.Theme)
 	p := tea.NewProgram(NewModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)

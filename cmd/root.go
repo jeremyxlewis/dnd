@@ -18,7 +18,7 @@ var RootCmd = &cobra.Command{
 	Use:   "dnd",
 	Short: "A CLI companion for Dungeons & Dragons",
 	Long: `dnd is a command-line companion for Dungeons & Dragons players and Dungeon Masters.
-It provides tools for rolling dice, looking up rules, spells, monsters, and more.`,
+It provides tools for rolling dice, looking up rules, spells, monsters, and more, including an interactive TUI for character creation and content browsing.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -51,5 +51,5 @@ func init() {
 	}
 
 	// Add commands
-	// RootCmd.AddCommand(charCmd) // Removed for now
+	RootCmd.AddCommand(charCmd)
 }

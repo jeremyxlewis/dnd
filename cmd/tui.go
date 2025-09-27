@@ -13,7 +13,7 @@ var tuiCmd = &cobra.Command{
 	Long: `The 'tui' command starts the full-screen, interactive
 text-based user interface for the D&D CLI companion.
 
-Use this to access various features in a more interactive way.`,
+Use this to browse content, roll dice, and create characters interactively.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		tui.StartTUI()
 	},
