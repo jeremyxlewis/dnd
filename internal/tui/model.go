@@ -37,10 +37,9 @@ type mainModel struct {
 
 // topModel is the top-level model that manages switching between different sub-models.
 type topModel struct {
-	current    tea.Model
-	width      int
-	height     int
-	ctrlCCount int
+	current tea.Model
+	width   int
+	height  int
 }
 
 // setWrappedContent sets the viewport content with word wrapping and optional styling.
@@ -128,11 +127,12 @@ NPC Generation:
 Other:
    help or ?           - Show this help message
 
-Keyboard Shortcuts:
-   Ctrl+H              - Show help
-   Ctrl+C              - Quit
+ Keyboard Shortcuts:
+    Ctrl+H              - Show help
+    Ctrl+C              - Quit
+    Esc                 - Exit or go back
 
-In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
+ In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
 Press Ctrl+C twice to quit the TUI. Use ↑/↓ to scroll output.`
 }
 
@@ -147,6 +147,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if msg.Type == -1 && len(msg.Runes) == 1 && msg.Runes[0] == '/' {
+			m.textInput.SetValue("")
+			return m, func() tea.Msg { return switchModeMsg{"fuzzy_global"} }
+		}
 		switch msg.Type {
 		case tea.KeyEnter:
 			input := m.textInput.Value()
@@ -340,15 +344,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.HalfViewDown()
 		}
 
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.viewport.Width = msg.Width - ViewportWidthPadding // account for border/padding
-		m.viewport.Height = msg.Height - ViewportHeightPadding
-		if m.lastContent != "" {
-			m.setWrappedContent(m.lastContent, m.lastStyle)
-		}
-
 	// We handle errors just like any other message
 	case errMsg:
 		// Handle error if needed
@@ -370,7 +365,7 @@ func (m mainModel) View() string {
 	promptSection := lipgloss.JoinVertical(lipgloss.Left,
 		promptStyle.Render("What is thy command, adventurer?"),
 		m.textInput.View(),
-		quitStyle.Render("Press Ctrl+C twice to quit. Use ↑/↓ to scroll output."),
+		quitStyle.Render("Press Ctrl+C to quit. Use ↑/↓ to scroll output."),
 	)
 
 	return lipgloss.JoinVertical(lipgloss.Left, viewportContent, promptSection)
@@ -386,7 +381,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case switchModeMsg:
-		m.ctrlCCount = 0
 		switch msg.mode {
 		case "main":
 			mm := newMainModel(m.width, m.height)
@@ -431,7 +425,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case selectedMsg:
-		m.ctrlCCount = 0
 		mm := newMainModel(m.width, m.height)
 		if msg.mode == "global" {
 			// Parse "Category: Name"
@@ -451,17 +444,8 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			m.ctrlCCount++
-			if m.ctrlCCount == 1 {
-				if mm, ok := m.current.(*mainModel); ok {
-					mm.status = "Press Ctrl+C again to quit."
-				}
-				return m, nil
-			} else {
-				return m, tea.Quit
-			}
+			return m, tea.Quit
 		case tea.KeyCtrlH:
-			m.ctrlCCount = 0
 			// Display help in main model
 			if mm, ok := m.current.(*mainModel); ok {
 				mm.setWrappedContent(getHelpText())
@@ -469,19 +453,20 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		default:
-			m.ctrlCCount = 0
 			// Pass to current model
 			m.current, cmd = m.current.Update(msg)
 			return m, cmd
 		}
 	case tea.WindowSizeMsg:
-		m.ctrlCCount = 0
 		m.width = msg.Width
 		m.height = msg.Height
 		// Update current model if it has size
 		if mm, ok := m.current.(*mainModel); ok {
+			mm.width = msg.Width
+			mm.height = msg.Height
 			mm.viewport.Width = msg.Width - ViewportWidthPadding
 			mm.viewport.Height = msg.Height - ViewportHeightPadding
+			mm.textInput.Width = msg.Width - 20
 		} else if fm, ok := m.current.(*fuzzyModel); ok {
 			fm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
 		} else if cm, ok := m.current.(*charCreateModel); ok {
@@ -495,7 +480,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	default:
-		m.ctrlCCount = 0
 		m.current, cmd = m.current.Update(msg)
 		return m, cmd
 	}

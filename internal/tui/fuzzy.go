@@ -6,6 +6,7 @@ import (
 
 	"dnd-cli/internal/data"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -79,6 +80,11 @@ func newFuzzyModel(mode string) fuzzyModel {
 	l.Title = "Select " + mode
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled()) // Disable q quit, use Ctrl+C globally
+	// Apply theme to list styles
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	return fuzzyModel{list: l, mode: mode, width: DefaultWidth}
 }
 

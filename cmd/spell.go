@@ -19,7 +19,7 @@ including its description, properties, and source.
 Examples:
   dnd spell "Fireball"
   dnd spell "eldritch blast"`,
-	Args:  cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		spellName := strings.Join(args, " ")
 
@@ -35,7 +35,7 @@ Examples:
 			fmt.Printf("%s: %v\n", key, value)
 		}
 		fmt.Printf("Source: %s (%s)\n", spell.Book, spell.Publisher)
-		fmt.Println("-------------------\n")
+		fmt.Print("-------------------\n")
 	},
 }
 

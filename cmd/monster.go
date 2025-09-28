@@ -19,7 +19,7 @@ including its name and a brief description.
 Examples:
   dnd monster "Goblin"
   dnd monster "Ancient Red Dragon"`,
-	Args:  cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		monsterName := strings.Join(args, " ")
 
@@ -31,7 +31,7 @@ Examples:
 
 		fmt.Printf("\n--- %s ---\n", monster.Name)
 		fmt.Printf("Description: %s\n", monster.Description)
-		fmt.Println("-------------------\n")
+		fmt.Print("-------------------\n")
 	},
 }
 

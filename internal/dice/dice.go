@@ -8,12 +8,16 @@ import (
 	"time"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 // DiceRoll represents the parsed components of a dice roll notation.
 type DiceRoll struct {
-	NumDice    int
-	DieType    int
-	Modifier   int
-	Notation   string
+	NumDice  int
+	DieType  int
+	Modifier int
+	Notation string
 }
 
 // ParseDiceNotation parses a string like "2d6+5" into a DiceRoll struct.
@@ -55,16 +59,15 @@ func ParseDiceNotation(notation string) (*DiceRoll, error) {
 	}
 
 	return &DiceRoll{
-		NumDice:    numDice,
-		DieType:    dieType,
-		Modifier:   modifier,
-		Notation:   notation,
+		NumDice:  numDice,
+		DieType:  dieType,
+		Modifier: modifier,
+		Notation: notation,
 	}, nil
 }
 
 // Roll performs the dice roll based on the DiceRoll struct.
 func (dr *DiceRoll) Roll() (int, []int) {
-	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
 	rolls := make([]int, dr.NumDice)
 	total := 0
 

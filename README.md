@@ -211,7 +211,7 @@ dnd tui
 - **Navigation:** Use ↑↓ or jk keys to scroll lists, Enter to select, / to search within lists, Esc to go back.
 - **Scrolling:** Use ↑/↓ keys to scroll through long content in the output area.
 - **Help:** Type `help` or `?` for available commands.
-- **Quitting:** Press Esc or Ctrl+C to exit.
+- **Quitting:** Press Ctrl+C to exit from any screen. Press Esc to exit main or go back in sub-menus.
 
 ### Example TUI Workflow
 

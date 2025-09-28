@@ -31,7 +31,7 @@ Examples:
 			fmt.Printf("Bond: %s\n", npc.Bond)
 			fmt.Printf("Flaw: %s\n", npc.Flaw)
 			fmt.Printf("Backstory: %s\n", npc.Backstory)
-			fmt.Println("---------------------\n")
+			fmt.Print("---------------------\n")
 		} else {
 			fmt.Printf("Hark! Thy subcommand '%s' for npc doth bewilder my arcane senses. Pray tell, couldst thou rephrase thy plea.\n", args[0])
 		}
@@ -57,7 +57,7 @@ func init() {
 			fmt.Printf("Bond: %s\n", npc.Bond)
 			fmt.Printf("Flaw: %s\n", npc.Flaw)
 			fmt.Printf("Backstory: %s\n", npc.Backstory)
-			fmt.Println("---------------------\n")
+			fmt.Print("---------------------\n")
 		},
 	}
 	npcCmd.AddCommand(generateCmd)

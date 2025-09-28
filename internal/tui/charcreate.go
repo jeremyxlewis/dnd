@@ -11,6 +11,7 @@ import (
 	"dnd-cli/internal/character"
 	"dnd-cli/internal/data"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -236,18 +237,26 @@ func (m charCreateModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *charCreateModel) setupScoreMethodList() {
 	items := createListItems([]string{"Standard Array", "Roll 4d6 Drop Lowest", "Point Buy"})
 	l := list.New(items, customDelegate{}, m.width, m.height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Select Ability Score Method"
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	m.list = l
 }
 
 func (m *charCreateModel) setupAlignmentList() {
 	items := createListItems([]string{"Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil"})
 	l := list.New(items, customDelegate{}, m.width, m.height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Select Alignment"
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	m.list = l
 }
 
@@ -278,9 +287,13 @@ func (m *charCreateModel) setupSpeciesList() {
 	titles := getUniqueTitles(data.AllSpecies, func(s data.Species) string { return s.Name })
 	items := createListItems(titles)
 	l := list.New(items, customDelegate{}, m.width, m.height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Select Species"
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	m.list = l
 }
 
@@ -288,9 +301,13 @@ func (m *charCreateModel) setupClassList() {
 	titles := getUniqueTitles(data.AllClasses, func(c data.Class) string { return c.Name })
 	items := createListItems(titles)
 	l := list.New(items, customDelegate{}, m.width, m.height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Select Class"
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	m.list = l
 }
 
@@ -298,9 +315,13 @@ func (m *charCreateModel) setupBackgroundList() {
 	titles := getUniqueTitles(data.AllBackgrounds, func(b data.Background) string { return b.Name })
 	items := createListItems(titles)
 	l := list.New(items, customDelegate{}, m.width, m.height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Select Background"
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
+	l.Styles.Title = headerStyle
+	l.Styles.FilterPrompt = focusedStyle
+	l.Styles.FilterCursor = cursorStyle
 	m.list = l
 }
 
@@ -535,51 +556,51 @@ func (m *charCreateModel) setupListForStep() {
 func (m charCreateModel) View() string {
 	switch m.step {
 	case StepName:
-		return fmt.Sprintf("Character Creation - Enter Name\n\n%s\n\nPress Enter to continue, Esc to cancel.", m.textInput.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Enter Name\n\n%s\n\nPress Enter to continue, Esc to cancel.", m.textInput.View()))
 	case StepAlignment:
-		return fmt.Sprintf("Character Creation - Select Alignment\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Select Alignment\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View()))
 	case StepPlayer:
-		return fmt.Sprintf("Character Creation - Enter Player/Campaign Details\n\n%s\n\nPress Enter to continue, Esc to go back.", m.textInput.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Enter Player/Campaign Details\n\n%s\n\nPress Enter to continue, Esc to go back.", m.textInput.View()))
 	case StepLevel:
-		return fmt.Sprintf("Character Creation - Enter Starting Level\n\n%s\n\nPress Enter to continue, Esc to go back.", m.textInput.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Enter Starting Level\n\n%s\n\nPress Enter to continue, Esc to go back.", m.textInput.View()))
 	case StepScoreMethod:
-		return fmt.Sprintf("Character Creation - Select Score Method\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Select Score Method\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View()))
 	case StepScores:
 		scoreNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
 		scoreDisplay := ""
 		for i, score := range m.scores {
 			scoreDisplay += fmt.Sprintf("%s: %d\n", scoreNames[i], score)
 		}
-		return fmt.Sprintf("Character Creation - Ability Scores (%s)\n\n%s\n\nPress Enter to accept, Esc to go back.", m.scoreMethod, scoreDisplay)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Ability Scores (%s)\n\n%s\n\nPress Enter to accept, Esc to go back.", m.scoreMethod, scoreDisplay))
 	case StepSpecies:
-		return fmt.Sprintf("Character Creation - Select Species\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Select Species\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View()))
 	case StepSpeciesInfo:
 		desc := getSpeciesDescription(m.species)
-		return fmt.Sprintf("Character Creation - Species: %s\n\n%s\n\nRacial ASIs applied temporarily.\n\nPress Enter to continue, Esc to go back.", m.species, desc)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Species: %s\n\n%s\n\nRacial ASIs applied temporarily.\n\nPress Enter to continue, Esc to go back.", m.species, desc))
 	case StepClass:
-		return fmt.Sprintf("Character Creation - Select Class\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Select Class\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View()))
 	case StepClassInfo:
 		desc := getClassDescription(m.class)
-		return fmt.Sprintf("Character Creation - Class: %s\n\n%s\n\nPress Enter to continue, Esc to go back.", m.class, desc)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Class: %s\n\n%s\n\nPress Enter to continue, Esc to go back.", m.class, desc))
 	case StepBackground:
-		return fmt.Sprintf("Character Creation - Select Background\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View())
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Select Background\n\n%s\n\nType / to search, ↑↓ or jk to navigate, Enter to select, Esc to go back.", m.list.View()))
 	case StepBackgroundInfo:
 		desc := getBackgroundDescription(m.background)
-		return fmt.Sprintf("Character Creation - Background: %s\n\n%s\n\nBackground proficiencies applied.\n\nPress Enter to continue, Esc to go back.", m.background, desc)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Background: %s\n\n%s\n\nBackground proficiencies applied.\n\nPress Enter to continue, Esc to go back.", m.background, desc))
 	case StepProficiencies:
 		profStr := strings.Join(m.proficiencies, ", ")
-		return fmt.Sprintf("Character Creation - Proficiencies\n\nApplied Proficiencies: %s\n\nPress Enter to continue, Esc to go back.", profStr)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Proficiencies\n\nApplied Proficiencies: %s\n\nPress Enter to continue, Esc to go back.", profStr))
 	case StepEquipment:
 		equipStr := strings.Join(m.equipment, ", ")
-		return fmt.Sprintf("Character Creation - Equipment\n\nStarting Equipment: %s\n\nPress Enter to continue, Esc to go back.", equipStr)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Equipment\n\nStarting Equipment: %s\n\nPress Enter to continue, Esc to go back.", equipStr))
 	case StepConfirm:
 		scoreNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
 		scoreDisplay := ""
 		for i, score := range m.scores {
 			scoreDisplay += fmt.Sprintf("%s: %d ", scoreNames[i], score)
 		}
-		return fmt.Sprintf("Character Creation - Confirm\n\nName: %s\nAlignment: %s\nPlayer: %s\nLevel: %d\nScores: %s\nSpecies: %s\nClass: %s\nBackground: %s\n\nPress Enter to create, Esc to go back.", m.name, m.alignment, m.player, m.level, scoreDisplay, m.species, m.class, m.background)
+		return viewStyle.Render(fmt.Sprintf("Character Creation - Confirm\n\nName: %s\nAlignment: %s\nPlayer: %s\nLevel: %d\nScores: %s\nSpecies: %s\nClass: %s\nBackground: %s\n\nPress Enter to create, Esc to go back.", m.name, m.alignment, m.player, m.level, scoreDisplay, m.species, m.class, m.background))
 	default:
-		return "Error"
+		return viewStyle.Render("Error")
 	}
 }

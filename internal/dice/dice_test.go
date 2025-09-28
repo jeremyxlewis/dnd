@@ -6,8 +6,8 @@ import (
 
 func TestParseDiceNotation(t *testing.T) {
 	tests := []struct {
-		name     string
-		notation string
+		name           string
+		notation       string
 		expectNumDice  int
 		expectDieType  int
 		expectModifier int
@@ -49,8 +49,8 @@ func TestParseDiceNotation(t *testing.T) {
 
 func TestRoll(t *testing.T) {
 	tests := []struct {
-		name     string
-		notation string
+		name      string
+		notation  string
 		expectMin int
 		expectMax int
 	}{

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,6 +40,7 @@ func newInitiativeTracker(width, height int) initiativeTracker {
 
 	items := []list.Item{}
 	l := list.New(items, customDelegate{}, width, height-ListHeightPadding)
+	l.KeyMap.Quit = key.NewBinding(key.WithDisabled())
 	l.Title = "Combatants (sorted by initiative)"
 
 	return initiativeTracker{
@@ -106,7 +108,7 @@ func (m initiativeTracker) View() string {
 	content.WriteString("\n")
 	content.WriteString(m.textInput.View())
 	content.WriteString("\n\nPress Esc to exit.")
-	return content.String()
+	return viewStyle.Render(content.String())
 }
 
 func (m *initiativeTracker) updateList() {

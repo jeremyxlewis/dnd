@@ -25,7 +25,7 @@ Examples:
   dnd roll 2d6+3
   dnd roll 1d20 --advantage
   dnd roll 4d6 --disadvantage`,
-	Args:  cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		notation := strings.ToLower(args[0])
 

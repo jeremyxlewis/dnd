@@ -19,7 +19,7 @@ including its name and a brief description.
 Examples:
   dnd item "Potion of Healing"
   dnd item "Longsword"`,
-	Args:  cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		itemName := strings.Join(args, " ")
 
@@ -31,7 +31,7 @@ Examples:
 
 		fmt.Printf("\n--- %s ---\n", item.Name)
 		fmt.Printf("Description: %s\n", item.Description)
-		fmt.Println("-------------------\n")
+		fmt.Print("-------------------\n")
 	},
 }
 

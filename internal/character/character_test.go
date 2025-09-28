@@ -1,7 +1,6 @@
 package character
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestNewCharacter(t *testing.T) {
-	char := NewCharacter("TestChar", "Human", "Fighter", "Soldier")
+	char := NewCharacter("TestChar", "Human", "Fighter", "Soldier", 10, 10, 10, 10, 10, 10)
 
 	if char.Name != "TestChar" {
 		t.Errorf("Expected name TestChar, got %s", char.Name)
@@ -22,13 +21,13 @@ func TestNewCharacter(t *testing.T) {
 
 func TestSaveLoadCharacter(t *testing.T) {
 	// Create a temporary directory for test files
-	testDir, err := ioutil.TempDir("", "char-test")
+	testDir, err := os.MkdirTemp("", "char-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(testDir) // Clean up after test
 
-	originalChar := NewCharacter("SaveLoadChar", "Elf", "Rogue", "Criminal")
+	originalChar := NewCharacter("SaveLoadChar", "Elf", "Rogue", "Criminal", 10, 10, 10, 10, 10, 10)
 	charFilePath := filepath.Join(testDir, "SaveLoadChar.json")
 
 	// Save character
@@ -51,7 +50,7 @@ func TestSaveLoadCharacter(t *testing.T) {
 }
 
 func TestLevelUp(t *testing.T) {
-	char := NewCharacter("LevelUpChar", "Dwarf", "Cleric", "Acolyte")
+	char := NewCharacter("LevelUpChar", "Dwarf", "Cleric", "Acolyte", 10, 10, 10, 10, 10, 10)
 
 	initialLevel := char.Level
 	initialHP := char.HitPoints

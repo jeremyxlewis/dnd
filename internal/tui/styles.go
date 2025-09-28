@@ -17,10 +17,11 @@ var (
 	outputStyle     = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "15", Dark: "15"}).Padding(0, 1)                                                                           // Bright white
 	errorStyle      = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "1", Dark: "1"}).Padding(0, 1)                                                                             // Bright red
 	viewportStyle   = lipgloss.NewStyle()
-	selectedStyle   = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "11", Dark: "220"}).Bold(true)                                        // Gold
-	unselectedStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "250"})                                                  // Light gray
+	selectedStyle   = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "11", Dark: "220"}).Bold(true).Inline(true)                           // Gold
+	unselectedStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "250"}).Inline(true)                                     // Light gray
 	infoCardStyle   = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(1).BorderForeground(lipgloss.AdaptiveColor{Light: "11", Dark: "220"}) // Gold border
 	rollStyle       = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(1).BorderForeground(lipgloss.AdaptiveColor{Light: "2", Dark: "2"})     // Green border
+	viewStyle       = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "15", Dark: "15"})                                                    // Bright white
 )
 
 var errorMessages = []string{

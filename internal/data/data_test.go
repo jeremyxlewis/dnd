@@ -1,7 +1,6 @@
 package data
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,7 +8,7 @@ import (
 
 func TestLoadDataAndLookup(t *testing.T) {
 	// Create a temporary directory for test data
-	testDir, err := ioutil.TempDir("", "dnd-data-test")
+	testDir, err := os.MkdirTemp("", "dnd-data-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -20,7 +19,7 @@ func TestLoadDataAndLookup(t *testing.T) {
 		{"name":"Test Spell 1","description":"Desc 1","properties":{},"publisher":"Pub 1","book":"Book 1"},
 		{"name":"Test Spell 2","description":"Desc 2","properties":{},"publisher":"Pub 2","book":"Book 2"}
 	]`
-	if err := ioutil.WriteFile(filepath.Join(testDir, "spells.json"), []byte(dummySpells), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testDir, "spells.json"), []byte(dummySpells), 0644); err != nil {
 		t.Fatalf("Failed to write dummy spells.json: %v", err)
 	}
 
@@ -29,7 +28,7 @@ func TestLoadDataAndLookup(t *testing.T) {
 		{"name":"Test Monster 1","description":"Monster Desc 1"},
 		{"name":"Test Monster 2","description":"Monster Desc 2"}
 	]`
-	if err := ioutil.WriteFile(filepath.Join(testDir, "monsters.json"), []byte(dummyMonsters), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testDir, "monsters.json"), []byte(dummyMonsters), 0644); err != nil {
 		t.Fatalf("Failed to write dummy monsters.json: %v", err)
 	}
 
@@ -38,7 +37,7 @@ func TestLoadDataAndLookup(t *testing.T) {
 		{"name":"Test Item 1","description":"Item Desc 1"},
 		{"name":"Test Item 2","description":"Item Desc 2"}
 	]`
-	if err := ioutil.WriteFile(filepath.Join(testDir, "items.json"), []byte(dummyItems), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testDir, "items.json"), []byte(dummyItems), 0644); err != nil {
 		t.Fatalf("Failed to write dummy items.json: %v", err)
 	}
 
@@ -47,7 +46,7 @@ func TestLoadDataAndLookup(t *testing.T) {
 		{"name":"Human","description":""},
 		{"name":"Elf","description":""}
 	]`
-	if err := ioutil.WriteFile(filepath.Join(testDir, "species.json"), []byte(dummySpecies), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testDir, "species.json"), []byte(dummySpecies), 0644); err != nil {
 		t.Fatalf("Failed to write dummy species.json: %v", err)
 	}
 
@@ -56,8 +55,17 @@ func TestLoadDataAndLookup(t *testing.T) {
 		{"name":"Acolyte","description":""},
 		{"name":"Soldier","description":""}
 	]`
-	if err := ioutil.WriteFile(filepath.Join(testDir, "backgrounds.json"), []byte(dummyBackgrounds), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(testDir, "backgrounds.json"), []byte(dummyBackgrounds), 0644); err != nil {
 		t.Fatalf("Failed to write dummy backgrounds.json: %v", err)
+	}
+
+	// Create dummy classes.json
+	dummyClasses := `[
+		{"name":"Fighter","description":""},
+		{"name":"Wizard","description":""}
+	]`
+	if err := os.WriteFile(filepath.Join(testDir, "classes.json"), []byte(dummyClasses), 0644); err != nil {
+		t.Fatalf("Failed to write dummy classes.json: %v", err)
 	}
 
 	// Load data from the temporary directory
@@ -97,8 +105,8 @@ func TestLoadDataAndLookup(t *testing.T) {
 	}
 
 	// Test NPC generation
-	name, species, background := GenerateNPC()
-	if name == "" || species == "" || background == "" {
-		t.Errorf("GenerateNPC returned empty string: Name='%s', Species='%s', Background='%s'", name, species, background)
+	npc := GenerateNPC()
+	if npc.Name == "" || npc.Species == "" || npc.Background == "" {
+		t.Errorf("GenerateNPC returned empty string: Name='%s', Species='%s', Background='%s'", npc.Name, npc.Species, npc.Background)
 	}
 }

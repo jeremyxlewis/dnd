@@ -32,18 +32,18 @@ type Config struct {
 // DefaultTheme returns the default theme.
 func DefaultTheme() Theme {
 	return Theme{
-		FocusedColor:    "#FFB6C1", // Light Pink
-		BlurColor:       "#FFFFFF", // White
-		CursorColor:     "#FFB6C1", // Light Pink
-		PromptColor:     "#87CEFA", // Light Sky Blue
-		QuitColor:       "#B0C4DE", // Light Steel Blue
-		OutputColor:     "#FFFFFF", // White
-		ErrorColor:      "#F08080", // Light Coral
-		SelectedColor:   "#FFB6C1", // Light Pink
-		UnselectedColor: "#FFFFFF", // White
-		InfoCardColor:   "#ADD8E6", // Light Blue
-		RollColor:       "#B0E0E6", // Powder Blue
-		HeaderColor:     "#E6E6FA", // Lavender
+		FocusedColor:    "#FFB6C1", // Pastel Pink
+		BlurColor:       "#E6E6FA", // Lavender
+		CursorColor:     "#FFB6C1", // Pastel Pink
+		PromptColor:     "#A8DADC", // Pastel Mint
+		QuitColor:       "#D3D3D3", // Light Gray
+		OutputColor:     "#F8F9FA", // Off-White
+		ErrorColor:      "#F8BBD9", // Pastel Rose
+		SelectedColor:   "#FFB6C1", // Pastel Pink
+		UnselectedColor: "#D3D3D3", // Light Gray
+		InfoCardColor:   "#B19CD9", // Pastel Purple
+		RollColor:       "#A8DADC", // Pastel Mint
+		HeaderColor:     "#FFB6C1", // Pastel Pink
 	}
 }
 
@@ -101,4 +101,5 @@ func ApplyTheme(theme Theme) {
 	infoCardStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(1).BorderForeground(lipgloss.Color(theme.InfoCardColor))
 	rollStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(1).BorderForeground(lipgloss.Color(theme.RollColor))
 	headerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.HeaderColor)).Background(lipgloss.Color(theme.HeaderColor)).Padding(0, 1).Bold(true)
+	viewStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.OutputColor))
 }
