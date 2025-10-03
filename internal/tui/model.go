@@ -37,9 +37,10 @@ type mainModel struct {
 
 // topModel is the top-level model that manages switching between different sub-models.
 type topModel struct {
-	current tea.Model
-	width   int
-	height  int
+	current     tea.Model
+	width       int
+	height      int
+	quitConfirm bool
 }
 
 // setWrappedContent sets the viewport content with word wrapping and optional styling.
@@ -144,13 +145,16 @@ NPC Generation:
 Other:
    help or ?           - Show this help message
 
- Keyboard Shortcuts:
-    Ctrl+H              - Show help
-    Ctrl+C              - Quit
-    Esc                 - Exit or go back
+  Keyboard Shortcuts:
+     Ctrl+H              - Show help
+     Ctrl+C              - Quit (press twice to confirm)
+     Esc                 - Exit or go back
 
- In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
-Press Ctrl+C twice to quit the TUI. Use ↑/↓ to scroll output.`
+  Commands:
+     quit or exit        - Quit the TUI
+
+  In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
+ Use ↑/↓ to scroll output.`
 }
 
 // Init initializes the main TUI model. It can return a command to perform initial actions.
@@ -335,6 +339,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					} else {
 						m.setWrappedContent("Usage: char create", errorStyle)
 					}
+				case "quit", "exit":
+					return m, tea.Quit
 				default:
 					m.setWrappedContent(getRandomErrorMessage(), errorStyle)
 				}
@@ -459,9 +465,20 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.current = mm
 		return m, nil
 	case tea.KeyMsg:
+		if msg.Type != tea.KeyCtrlC {
+			m.quitConfirm = false
+		}
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			return m, tea.Quit
+			if m.quitConfirm {
+				return m, tea.Quit
+			} else {
+				m.quitConfirm = true
+				if mm, ok := m.current.(*mainModel); ok {
+					mm.setWrappedContent("Press Ctrl+C again to quit.", errorStyle)
+				}
+				return m, nil
+			}
 		case tea.KeyCtrlH:
 			// Display help in main model
 			if mm, ok := m.current.(*mainModel); ok {
