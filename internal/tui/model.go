@@ -45,19 +45,21 @@ type topModel struct {
 // setWrappedContent sets the viewport content with word wrapping and optional styling.
 func (m *mainModel) setWrappedContent(content string, style ...lipgloss.Style) {
 	m.lastContent = content
-	m.lastStyle = outputStyle
-	var wrapped string
+	var s lipgloss.Style
 	if len(style) > 0 {
-		s := style[0]
+		s = style[0]
 		m.lastStyle = s
-		// For styled content, wrap to inner width first
-		innerWidth := m.viewport.Width - 4 // border 2, padding 2
-		wrappedContent := lipgloss.NewStyle().Width(innerWidth).Render(content)
-		wrapped = s.Render(wrappedContent)
 	} else {
-		s := outputStyle
-		wrapped = s.Width(m.viewport.Width).Render(content)
+		s = m.lastStyle
+		if s.String() == "" { // if no last style, use default
+			s = outputStyle
+			m.lastStyle = s
+		}
 	}
+	// For styled content, wrap to inner width first
+	innerWidth := m.viewport.Width - 4 // border 2, padding 2
+	wrappedContent := lipgloss.NewStyle().Width(innerWidth).Render(content)
+	wrapped := s.Render(wrappedContent)
 	m.viewport.SetContent(wrapped)
 }
 
@@ -67,12 +69,27 @@ func newMainModel(width, height int) mainModel {
 	ti.Placeholder = "Type something..."
 	ti.Focus()
 	ti.CharLimit = TextInputCharLimit
-	ti.Width = TextInputWidth
+	tiWidth := width - 20
+	if tiWidth < 20 {
+		tiWidth = 20
+	}
+	if tiWidth > TextInputWidth {
+		tiWidth = TextInputWidth
+	}
+	ti.Width = tiWidth
 	ti.PromptStyle = focusedStyle
 	ti.TextStyle = focusedStyle
 	ti.Cursor.Style = cursorStyle
 
-	vp := viewport.New(width-ViewportWidthPadding, height-ViewportHeightPadding) // account for border/padding
+	vpWidth := width - ViewportWidthPadding
+	if vpWidth < 1 {
+		vpWidth = 1
+	}
+	vpHeight := height - ViewportHeightPadding
+	if vpHeight < 1 {
+		vpHeight = 1
+	}
+	vp := viewport.New(vpWidth, vpHeight) // account for border/padding
 
 	return mainModel{
 		textInput:    ti,
@@ -86,9 +103,9 @@ func newMainModel(width, height int) mainModel {
 	}
 }
 
-// NewModel creates the top-level TUI model with default dimensions.
+// NewModel creates the top-level TUI model with initial dimensions.
 func NewModel() topModel {
-	return topModel{current: newMainModel(DefaultWidth, DefaultHeight), width: DefaultWidth, height: DefaultHeight}
+	return topModel{current: newMainModel(0, 0), width: 0, height: 0}
 }
 
 // getHelpText returns a formatted help text for the TUI.
@@ -466,7 +483,18 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			mm.height = msg.Height
 			mm.viewport.Width = msg.Width - ViewportWidthPadding
 			mm.viewport.Height = msg.Height - ViewportHeightPadding
-			mm.textInput.Width = msg.Width - 20
+			tiWidth := msg.Width - 20
+			if tiWidth < 20 {
+				tiWidth = 20
+			}
+			if tiWidth > TextInputWidth {
+				tiWidth = TextInputWidth
+			}
+			mm.textInput.Width = tiWidth
+			// Re-wrap content if any
+			if mm.lastContent != "" {
+				mm.setWrappedContent(mm.lastContent, mm.lastStyle)
+			}
 		} else if fm, ok := m.current.(*fuzzyModel); ok {
 			fm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
 		} else if cm, ok := m.current.(*charCreateModel); ok {
@@ -580,7 +608,7 @@ type errMsg error
 func StartTUI() {
 	config := LoadConfig()
 	ApplyTheme(config.Theme)
-	p := tea.NewProgram(NewModel())
+	p := tea.NewProgram(NewModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
