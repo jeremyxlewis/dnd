@@ -105,7 +105,7 @@ func newMainModel(width, height int) mainModel {
 
 // NewModel creates the top-level TUI model with initial dimensions.
 func NewModel() topModel {
-	return topModel{current: newMainModel(0, 0), width: 0, height: 0}
+	return topModel{current: newMainModel(DefaultWidth, DefaultHeight), width: DefaultWidth, height: DefaultHeight}
 }
 
 // getHelpText returns a formatted help text for the TUI.
