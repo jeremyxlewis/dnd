@@ -37,10 +37,9 @@ type mainModel struct {
 
 // topModel is the top-level model that manages switching between different sub-models.
 type topModel struct {
-	current     tea.Model
-	width       int
-	height      int
-	quitConfirm bool
+	current tea.Model
+	width   int
+	height  int
 }
 
 // setWrappedContent sets the viewport content with word wrapping and optional styling.
@@ -147,7 +146,7 @@ Other:
 
   Keyboard Shortcuts:
      Ctrl+H              - Show help
-     Ctrl+C              - Quit (press twice to confirm)
+     Ctrl+C              - Quit
      Esc                 - Exit or go back
 
   Commands:
@@ -465,20 +464,9 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.current = mm
 		return m, nil
 	case tea.KeyMsg:
-		if msg.Type != tea.KeyCtrlC {
-			m.quitConfirm = false
-		}
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			if m.quitConfirm {
-				return m, tea.Quit
-			} else {
-				m.quitConfirm = true
-				if mm, ok := m.current.(*mainModel); ok {
-					mm.setWrappedContent("Press Ctrl+C again to quit.", errorStyle)
-				}
-				return m, nil
-			}
+			return m, tea.Quit
 		case tea.KeyCtrlH:
 			// Display help in main model
 			if mm, ok := m.current.(*mainModel); ok {
