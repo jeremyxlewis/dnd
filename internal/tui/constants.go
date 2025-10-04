@@ -5,7 +5,7 @@ const (
 	DefaultWidth          = 80
 	DefaultHeight         = 24
 	ViewportWidthPadding  = 2
-	ViewportHeightPadding = 3
+	ViewportHeightPadding = 2
 	ListHeightPadding     = 4
 	TextInputCharLimit    = 156
 	TextInputWidth        = 40

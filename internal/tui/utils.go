@@ -49,6 +49,11 @@ func getRandomClassErrorMessage(name string) string {
 	return fmt.Sprintf(getRandomMessage(classErrorMessages), name)
 }
 
+// getRandomPrompt returns a random prompt message.
+func getRandomPrompt() string {
+	return getRandomMessage(prompts)
+}
+
 // createListItems creates a slice of list.Item from a slice of strings.
 func createListItems(titles []string) []list.Item {
 	items := make([]list.Item, len(titles))

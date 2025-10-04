@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/term"
 )
 
 func init() {
@@ -23,16 +24,18 @@ func init() {
 // mainModel represents the main command-line interface model.
 // mainModel represents the main command-line interface model.
 type mainModel struct {
-	textInput    textinput.Model
-	viewport     viewport.Model
-	lastContent  string
-	lastStyle    lipgloss.Style
-	width        int
-	height       int
-	history      []string
-	historyIndex int
-	prevValue    string
-	status       string
+	textInput     textinput.Model
+	viewport      viewport.Model
+	lastContent   string
+	lastStyle     lipgloss.Style
+	width         int
+	height        int
+	history       []string
+	historyIndex  int
+	prevValue     string
+	status        string
+	currentPrompt string
+	fullScreen    bool
 }
 
 // topModel is the top-level model that manages switching between different sub-models.
@@ -92,20 +95,22 @@ func newMainModel(width, height int) mainModel {
 	vp := viewport.New(vpWidth, vpHeight) // account for border/padding
 
 	return mainModel{
-		textInput:    ti,
-		viewport:     vp,
-		width:        width,
-		height:       height,
-		history:      []string{},
-		historyIndex: 0,
-		prevValue:    "",
-		status:       "Ready. Type 'help' or '?' for commands.",
+		textInput:     ti,
+		viewport:      vp,
+		width:         width,
+		height:        height,
+		history:       []string{},
+		historyIndex:  0,
+		prevValue:     "",
+		status:        "Ready. Type 'help' or '?' for commands.",
+		currentPrompt: getRandomPrompt(),
+		fullScreen:    false,
 	}
 }
 
 // NewModel creates the top-level TUI model with initial dimensions.
-func NewModel() topModel {
-	return topModel{current: newMainModel(DefaultWidth, DefaultHeight), width: DefaultWidth, height: DefaultHeight}
+func NewModel(width, height int) topModel {
+	return topModel{current: newMainModel(width, height), width: width, height: height}
 }
 
 // getHelpText returns a formatted help text for the TUI.
@@ -116,7 +121,8 @@ Core Commands:
    roll <notation>     - Roll dice (e.g., roll 1d20, roll 2d6+3)
 
  Lookup Commands:
-     search [query]      - Global fuzzy search across all categories (spells, monsters, items, races, backgrounds, classes, rules)
+     search [query]      - Global fuzzy search across all categories
+                           (spells, monsters, items, races, backgrounds, classes, rules)
      spell [name]        - Browse/filter spell list or look up specific spell
      monster [name]      - Browse/filter monster list or look up specific monster
      item [name]         - Browse/filter item list or look up specific item
@@ -126,7 +132,8 @@ Core Commands:
      rules [topic]       - Look up PHB rules (combat, conditions, ability checks, etc.)
 
  Character Management (Full PHB Support):
-    char create         - Create a new character interactively in TUI (ability scores, all races/classes/backgrounds)
+    char create         - Create a new character interactively in TUI
+                          (ability scores, all races/classes/backgrounds)
     char view <name>    - View a character's full details
     char levelup <name> - Level up a character with proper mechanics
     char hp <name> <action> <amount> - Manage HP (damage/heal/set)
@@ -138,10 +145,10 @@ Core Commands:
  Combat & DM Tools:
     combat              - Launch initiative tracker for managing combat turns, HP, and conditions
 
-NPC Generation:
+ NPC Generation:
    npc [generate]      - Generate a random NPC
 
-Other:
+ Other:
    help or ?           - Show this help message
 
   Keyboard Shortcuts:
@@ -153,7 +160,7 @@ Other:
      quit or exit        - Quit the TUI
 
   In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
- Use ↑/↓ to scroll output.`
+ Use ↑/↓ to scroll output or navigate command history.`
 }
 
 // Init initializes the main TUI model. It can return a command to perform initial actions.
@@ -164,6 +171,34 @@ func (m mainModel) Init() tea.Cmd {
 // Update handles messages and updates the main model's state.
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+
+	if m.fullScreen {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.Type {
+			case tea.KeyUp:
+				m.viewport.LineUp(1)
+			case tea.KeyDown:
+				m.viewport.LineDown(1)
+			case tea.KeyPgUp:
+				m.viewport.HalfViewUp()
+			case tea.KeyPgDown:
+				m.viewport.HalfViewDown()
+			case tea.KeyCtrlC:
+				return m, tea.Quit
+			default:
+				m.fullScreen = false
+				m.viewport.Height = m.height - ViewportHeightPadding
+				m.setWrappedContent("")
+			}
+		case tea.WindowSizeMsg:
+			m.width = msg.Width
+			m.height = msg.Height
+			m.viewport.Width = msg.Width - ViewportWidthPadding
+			m.viewport.Height = msg.Height
+		}
+		return m, nil
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -186,7 +221,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.historyIndex = len(m.history)
 			}
 			if input == "help" || input == "?" {
-				m.setWrappedContent(getHelpText())
+				
+				m.viewport.Height = m.height
+				m.setWrappedContent(getHelpText(), infoCardStyle)
 				m.status = "Help displayed. Use ↑/↓ to scroll."
 				m.textInput.SetValue("")
 			} else if input != "" {
@@ -346,12 +383,16 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput.SetValue("")
 			}
 		case tea.KeyUp:
-			if len(m.history) > 0 && m.historyIndex > 0 {
+			if m.viewport.TotalLineCount() > m.viewport.Height {
+				m.viewport.LineUp(1)
+			} else if len(m.history) > 0 && m.historyIndex > 0 {
 				m.historyIndex--
 				m.textInput.SetValue(m.history[m.historyIndex])
 			}
 		case tea.KeyDown:
-			if m.historyIndex < len(m.history)-1 {
+			if m.viewport.TotalLineCount() > m.viewport.Height {
+				m.viewport.LineDown(1)
+			} else if m.historyIndex < len(m.history)-1 {
 				m.historyIndex++
 				m.textInput.SetValue(m.history[m.historyIndex])
 			} else if m.historyIndex == len(m.history)-1 || m.historyIndex == len(m.history) {
@@ -382,15 +423,30 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the UI.
 func (m mainModel) View() string {
-	viewportContent := m.viewport.View()
+	if m.fullScreen {
+		return m.viewport.View()
+	}
 
 	promptSection := lipgloss.JoinVertical(lipgloss.Left,
-		promptStyle.Render("What is thy command, adventurer?"),
+		promptStyle.Render(m.currentPrompt),
 		m.textInput.View(),
-		quitStyle.Render("Press Ctrl+C to quit. Use ↑/↓ to scroll output."),
 	)
 
-	return lipgloss.JoinVertical(lipgloss.Left, viewportContent, promptSection)
+	promptHeight := lipgloss.Height(promptSection)
+	viewportHeight := m.height - promptHeight
+
+	// Make sure viewport height is not negative
+	if viewportHeight < 0 {
+		viewportHeight = 0
+	}
+
+	m.viewport.Height = viewportHeight
+	// re-wrap content if any
+	if m.lastContent != "" {
+		m.setWrappedContent(m.lastContent, m.lastStyle)
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Top, m.viewport.View(), promptSection)
 }
 
 // topModel methods
@@ -487,7 +543,11 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			mm.width = msg.Width
 			mm.height = msg.Height
 			mm.viewport.Width = msg.Width - ViewportWidthPadding
-			mm.viewport.Height = msg.Height - ViewportHeightPadding
+			if mm.fullScreen {
+				mm.viewport.Height = msg.Height
+			} else {
+				mm.viewport.Height = msg.Height - ViewportHeightPadding
+			}
 			tiWidth := msg.Width - 20
 			if tiWidth < 20 {
 				tiWidth = 20
@@ -518,14 +578,10 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
+
+
 func (m topModel) View() string {
-	view := m.current.View()
-	// Fill to screen height with newlines to ensure UI is at top
-	lineCount := strings.Count(view, "\n") + 1
-	if lineCount < m.height {
-		view += strings.Repeat("\n", m.height-lineCount)
-	}
-	return view
+	return m.current.View()
 }
 
 // switchModeMsg is used to switch between different TUI modes.
@@ -617,9 +673,15 @@ type errMsg error
 
 // StartTUI runs the Bubble Tea application for the D&D CLI TUI.
 func StartTUI() {
+	width, height, err := term.GetSize(uintptr(os.Stdout.Fd()))
+	if err != nil {
+		width = DefaultWidth
+		height = DefaultHeight
+	}
+
 	config := LoadConfig()
 	ApplyTheme(config.Theme)
-	p := tea.NewProgram(NewModel())
+	p := tea.NewProgram(NewModel(width, height))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

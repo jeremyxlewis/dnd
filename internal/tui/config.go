@@ -32,18 +32,18 @@ type Config struct {
 // DefaultTheme returns the default theme.
 func DefaultTheme() Theme {
 	return Theme{
-		FocusedColor:    "#FFB6C1", // Pastel Pink
-		BlurColor:       "#E6E6FA", // Lavender
-		CursorColor:     "#FFB6C1", // Pastel Pink
-		PromptColor:     "#A8DADC", // Pastel Mint
+		FocusedColor:    "#87CEEB", // Sky Blue
+		BlurColor:       "#ADD8E6", // Light Blue
+		CursorColor:     "#FFC0CB", // Pink
+		PromptColor:     "#87CEEB", // Sky Blue
 		QuitColor:       "#D3D3D3", // Light Gray
 		OutputColor:     "#F8F9FA", // Off-White
 		ErrorColor:      "#F8BBD9", // Pastel Rose
-		SelectedColor:   "#FFB6C1", // Pastel Pink
+		SelectedColor:   "#87CEEB", // Sky Blue
 		UnselectedColor: "#D3D3D3", // Light Gray
-		InfoCardColor:   "#B19CD9", // Pastel Purple
-		RollColor:       "#A8DADC", // Pastel Mint
-		HeaderColor:     "#FFB6C1", // Pastel Pink
+		InfoCardColor:   "#FFC0CB", // Pink
+		RollColor:       "#87CEEB", // Sky Blue
+		HeaderColor:     "#ADD8E6", // Light Blue
 	}
 }
 

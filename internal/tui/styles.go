@@ -114,3 +114,16 @@ var classErrorMessages = []string{
 	"Goodness me! '%s' is as rare as a dragon's hoard. Type 'help' for a list of classes.",
 	"Heavens! '%s' is beyond my arcane grasp. Type 'help' for a list of classes.",
 }
+
+var prompts = []string{
+	"What is thy command, adventurer?",
+	"What dost thou seek, brave soul?",
+	"What is thy bidding?",
+	"What incantation dost thou utter?",
+	"What is thy will?",
+	"What command graces thy lips?",
+	"What directive dost thou give?",
+	"What is thy desire, hero?",
+	"What task dost thou assign?",
+	"What is thy command, valiant one?",
+}
