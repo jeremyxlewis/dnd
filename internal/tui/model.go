@@ -519,7 +519,13 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m topModel) View() string {
-	return m.current.View()
+	view := m.current.View()
+	// Fill to screen height with newlines to ensure UI is at top
+	lineCount := strings.Count(view, "\n") + 1
+	if lineCount < m.height {
+		view += strings.Repeat("\n", m.height-lineCount)
+	}
+	return view
 }
 
 // switchModeMsg is used to switch between different TUI modes.
@@ -613,7 +619,7 @@ type errMsg error
 func StartTUI() {
 	config := LoadConfig()
 	ApplyTheme(config.Theme)
-	p := tea.NewProgram(NewModel(), tea.WithAltScreen())
+	p := tea.NewProgram(NewModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
