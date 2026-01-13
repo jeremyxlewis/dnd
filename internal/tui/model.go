@@ -131,23 +131,6 @@ Core Commands:
      class [name]        - Browse/filter class list or look up specific class
      rules [topic]       - Look up PHB rules (combat, conditions, ability checks, etc.)
 
- Character Management (Full PHB Support):
-    char create         - Create a new character interactively in TUI
-                          (ability scores, all races/classes/backgrounds)
-    char view <name>    - View a character's full details
-    char levelup <name> - Level up a character with proper mechanics
-    char hp <name> <action> <amount> - Manage HP (damage/heal/set)
-    char spells <name> <action> <level> <amount> - Manage spell slots (use/restore)
-    char inventory <name> <action> <item> - Manage inventory (add/remove)
-    char condition <name> <action> <condition> - Manage conditions (add/remove)
-    char edit <name> <field> <value> - Edit character details (alignment/backstory)
-
- Combat & DM Tools:
-    combat              - Launch initiative tracker for managing combat turns, HP, and conditions
-
- NPC Generation:
-   npc [generate]      - Generate a random NPC
-
  Other:
    help or ?           - Show this help message
 
@@ -221,7 +204,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.historyIndex = len(m.history)
 			}
 			if input == "help" || input == "?" {
-				
+
 				m.viewport.Height = m.height
 				m.setWrappedContent(getHelpText(), infoCardStyle)
 				m.status = "Help displayed. Use ↑/↓ to scroll."
@@ -259,10 +242,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomSpellErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
-							order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
-							content += renderPropertiesTable(spell.Properties, order)
-							content += fmt.Sprintf("\n\nDescription:\n%s\n\n", formatDescription(spell.Description))
-							content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
+							content += formatDescription(spell.Description)
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -357,24 +337,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "search":
 					m.textInput.SetValue("")
 					return m, func() tea.Msg { return switchModeMsg{"fuzzy_global"} }
-				case "combat":
-					m.textInput.SetValue("")
-					return m, func() tea.Msg { return switchModeMsg{"initiative_tracker"} }
-				case "npc":
-					if len(args) < 2 || args[1] == "generate" {
-						npc := data.GenerateNPC()
-						content := fmt.Sprintf("--- Generated NPC ---\n\nName: %s\nSpecies: %s\nBackground: %s\n\nPersonality Trait: %s\n\nIdeal: %s\n\nBond: %s\n\nFlaw: %s\n\nBackstory: %s\n", npc.Name, npc.Species, npc.Background, npc.PersonalityTrait, npc.Ideal, npc.Bond, npc.Flaw, npc.Backstory)
-						m.setWrappedContent(infoCardStyle.Render(content))
-					} else {
-						m.setWrappedContent("Unknown npc subcommand.", errorStyle)
-					}
-				case "char":
-					if len(args) >= 2 && args[1] == "create" {
-						m.textInput.SetValue("")
-						return m, func() tea.Msg { return switchModeMsg{"char_create"} }
-					} else {
-						m.setWrappedContent("Usage: char create", errorStyle)
-					}
 				case "quit", "exit":
 					return m, tea.Quit
 				default:
@@ -463,8 +425,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "main":
 			mm := newMainModel(m.width, m.height)
 			m.current = mm
-		case "char_create":
-			m.current = newCharCreateModel(m.width, m.height)
 		case "fuzzy_spell":
 			fm := newFuzzyModel("spell")
 			fm.list.SetSize(m.width, m.height-2)
@@ -497,9 +457,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fm := newFuzzyModel("global")
 			fm.list.SetSize(m.width, m.height-2)
 			m.current = fm
-		case "initiative_tracker":
-			it := newInitiativeTracker(m.width, m.height)
-			m.current = it
 		}
 		return m, nil
 	case selectedMsg:
@@ -562,14 +519,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		} else if fm, ok := m.current.(*fuzzyModel); ok {
 			fm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
-		} else if cm, ok := m.current.(*charCreateModel); ok {
-			cm.width = msg.Width
-			cm.height = msg.Height
-			cm.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
-		} else if it, ok := m.current.(*initiativeTracker); ok {
-			it.width = msg.Width
-			it.height = msg.Height
-			it.list.SetSize(msg.Width, msg.Height-ListHeightPadding)
 		}
 		return m, nil
 	default:
@@ -577,8 +526,6 @@ func (m topModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 }
-
-
 
 func (m topModel) View() string {
 	return m.current.View()
@@ -605,10 +552,7 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomSpellErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
-			order := []string{"Level", "School", "Casting Time", "Range", "Components", "Duration"}
-			content += renderPropertiesTable(spell.Properties, order)
-			content += fmt.Sprintf("\n\nDescription:\n%s\n\n", formatDescription(spell.Description))
-			content += fmt.Sprintf("Source: %s (%s)\n", spell.Book, spell.Publisher)
+			content += formatDescription(spell.Description)
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "monster":

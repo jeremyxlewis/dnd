@@ -1,31 +1,33 @@
-# D&D CLI Companion
+# D&D TUI Companion
 
-A command-line companion for Dungeons & Dragons players and Dungeon Masters, built with Go and Cobra.
+An interactive terminal user interface for Dungeons & Dragons players and Dungeon Masters, built with Go and Bubble Tea. This is a **TUI-only** application - no CLI commands or arguments.
 
 ## Features
 
-*   **Dice Roller:** Roll dice using standard D&D notation (e.g., `2d6`, `1d20+5`), with support for advantage and disadvantage.
-*   **Information Lookup:** Quickly look up details for spells, monsters, and items from the D&D 5e SRD.
-*   **Character Management:** Full D&D character sheet management with Player's Handbook coverage - create, view, level up, track HP/spells/inventory, all 12 classes, 40+ races, 13 backgrounds, complete mechanics, and runtime play tracking.
-*   **NPC Generator:** Generate random NPC names, species, and backgrounds.
-*   **Interactive TUI:** Full-screen terminal interface for browsing and searching content with fuzzy matching, including guided character creation following D&D rules.
+*   **Interactive TUI:** Full-screen terminal interface for browsing and searching content with fuzzy matching.
+*   **Spell Browser:** Browse through all D&D 5e spells with detailed information including level, school, casting time, range, components, duration, and descriptions.
+*   **Monster Compendium:** Complete monster stat blocks with abilities, actions, skills, and challenge ratings.
+*   **Character Creation:** Guided step-by-step character creation following D&D 5e rules - select name, alignment, species, class, background, ability scores, proficiencies, equipment, and spellcasting.
+*   **Dice Rolling:** Interactive dice rolling with standard D&D notation and visual feedback.
+*   **Fuzzy Search:** Real-time filtering across all content types - just start typing to narrow results.
+*   **Keyboard Navigation:** Full keyboard support with arrow keys, j/k navigation, search shortcuts, and intuitive controls.
 
 ## Installation
 
 ### Prerequisites
 
-*   Go (version 1.16 or higher)
+*   Go (version 1.25 or higher)
 *   Git
 
 ### Steps
 
 1.  **Clone the repository:**
     ```bash
-    git clone --recurse-submodules https://github.com/jeremyxlewis/dnd.git
-    cd dnd-cli
+    git clone https://github.com/jeremyxlewis/dnd.git
+    cd dnd
     ```
 
-2.  **The D&D data is already included** in the `data/` directory as a git submodule.
+2.  **The D&D data is already included** in the `data/` directory.
 
 3.  **Build the application:**
     ```bash
@@ -35,195 +37,103 @@ A command-line companion for Dungeons & Dragons players and Dungeon Masters, bui
 
 ## Usage
 
-Run the `dnd` executable from the project root. Use `./dnd` if it's not in your PATH.
+Run the TUI application from the project root:
+
+```bash
+./dnd
+```
+
+The application will launch directly into the interactive terminal interface.
 
 ### Optional: Install Globally
 
-To run `dnd` from anywhere without `./`:
+To run `dnd` from anywhere:
 
 - Move to a PATH directory: `sudo mv dnd /usr/local/bin/`
-- Or add to your PATH: Add `export PATH="$PATH:/path/to/dnd-cli"` to `~/.bashrc` (replace with actual path).
+- Or add to your PATH: Add `export PATH="$PATH:/path/to/dnd"` to `~/.bashrc` (replace with actual path).
 
-Then use `dnd` or `dnd tui` directly.
+## TUI Features and Usage
 
-### Dice Roller
+### Main Interface
 
-Roll dice with standard notation:
+When you launch `./dnd`, you'll see:
 
-```bash
-dnd roll 1d20
-dnd roll 2d6+3
-```
+- **Welcome Screen:** Interactive menu with main options
+- **Content Browser:** Access to spells, monsters, items, species, backgrounds, and classes
+- **Character Creation:** Guided character builder with D&D 5e rules
+- **Dice Roller:** Interactive dice interface with visual feedback
+- **Help System:** Built-in help and command reference
 
-Roll with advantage:
+### Navigation Controls
 
-```bash
-dnd roll 1d20 --advantage
-dnd roll 1d20 -a
-```
+- **Arrow Keys (↑↓)** or **j/k**: Navigate through lists and menus
+- **Enter**: Select an item or confirm an action
+- **Esc**: Go back to previous screen or exit
+- **/**: Search within current content list
+- **Ctrl+C**: Quick exit from any screen
 
-Roll with disadvantage:
+### Content Browsing
 
-```bash
-dnd roll 1d20 --disadvantage
-dnd roll 1d20 -d
-```
+1. **Spell Browser:**
+   - Type `spell` at the main prompt
+   - Browse complete spell list with level, school, and casting time
+   - Real-time fuzzy filtering - just start typing!
+   - Press Enter for full details: range, components, duration, description
 
-### Spell Lookup
+2. **Monster Compendium:**
+   - Type `monster` at the main prompt  
+   - View complete stat blocks with AC, HP, abilities, actions
+   - Includes challenge ratings, skills, and special abilities
 
-Look up a spell by name:
+3. **Other Content:**
+   - `species`: Browse available races and racial traits
+   - `backgrounds`: View background features and proficiencies
+   - `classes`: Browse class information and features
 
-```bash
-dnd spell "Fireball"
-dnd spell "eldritch blast"
-```
+### Character Creation
 
-### Monster Lookup
+Select "Create Character" from main menu to start guided creation:
 
-Look up a monster by name:
+1. **Basic Info:** Name and alignment
+2. **Species Selection:** Choose from 40+ races with trait previews
+3. **Class Selection:** 12 D&D classes with feature descriptions
+4. **Background Selection:** 13 backgrounds with equipment and proficiencies
+5. **Ability Scores:** Standard Array, Roll, or Point Buy
+6. **Review & Confirm:** Complete character sheet overview
 
-```bash
-dnd monster "Goblin"
-dnd monster "Ancient Red Dragon"
-```
+### Dice Rolling
 
-### Item Lookup
+Type `roll` followed by dice notation:
 
-Look up an item by name:
+- `roll 1d20` - Single d20 roll
+- `roll 2d6+3` - Multiple dice with modifier
+- `roll 4d6` - Multiple dice
+- Visual feedback shows individual rolls and total
 
-```bash
-dnd item "Potion of Healing"
-dnd item "Longsword"
-```
+### Search and Filtering
 
-### NPC Generator
+All content browsers support:
+- **Real-time filtering:** Start typing to instantly filter results
+- **Case-insensitive:** Works regardless of capitalization
+- **Partial matching:** "fire" finds "Fireball", "Fire Bolt", etc.
+- **Fuzzy matching:** Finds close matches for typos
 
-Generate a random NPC:
-
-```bash
-dnd npc generate
-# or simply
-dnd npc
-```
-
-### Character Management
-
-The D&D CLI provides comprehensive character sheet management for full D&D 5e gameplay, including creation, progression, and runtime tracking.
-
-#### Creating a Character
-Create a new character interactively (prompts for species, class, and background with full PHB options - 40+ races, 12 classes, 13 backgrounds):
-
-```bash
-dnd char create "Eldrin"
-```
-
-This applies all racial traits, class proficiencies/features, background equipment, and initializes HP/spell slots.
-
-#### Viewing Character Sheets
-View a character's full sheet (ability scores with modifiers, proficiencies, features, spell slots, equipment, current HP, conditions, etc.):
+### Example Workflow
 
 ```bash
-dnd char view "Eldrin"
+./dnd
+
+# At main prompt:
+> spell          # Enter spell browser
+> fire           # Type to filter for fire spells
+[↓] Fireball    # Select and press Enter
+[Full spell details displayed]
+[Esc]            # Go back to main
+> roll 1d20+5    # Roll dice with advantage
+[Roll result shown]
 ```
 
-Displays complete character details, including current HP (e.g., `HP: 25/30 (+5 temp)`), used spell slots, and inventory.
-
-#### Leveling Up
-Level up a character (applies class features, HP increases, spell slots, subclass choices, etc.):
-
-```bash
-dnd char levelup "Eldrin"
-```
-
-Automatically applies level-appropriate mechanics and updates the character.
-
-#### Managing HP During Play
-Track hit points in combat and exploration:
-
-```bash
-dnd char hp "Eldrin" damage 10  # Take 10 damage
-dnd char hp "Eldrin" heal 5     # Heal 5 HP
-dnd char hp "Eldrin" set 20     # Set HP to exact value
-```
-
-#### Managing Spell Slots
-Track spell usage for spellcasters:
-
-```bash
-dnd char spells "Eldrin" use 1 1     # Use 1 first-level slot
-dnd char spells "Eldrin" restore 1 1 # Restore 1 first-level slot
-```
-
-#### Managing Inventory
-Add or remove items from equipment:
-
-```bash
-dnd char inventory "Eldrin" add "Potion of Healing"
-dnd char inventory "Eldrin" remove "Rusty Sword"
-```
-
-#### Complete Character Management Guide
-
-1. **Create Your Character:**
-   ```bash
-   dnd char create "MyHero"
-   # Follow prompts for race, class, background
-   ```
-
-2. **Review Your Sheet:**
-   ```bash
-   dnd char view "MyHero"
-   # Check stats, proficiencies, features
-   ```
-
-3. **Play the Game:**
-   - **Combat:** `dnd char hp "MyHero" damage 15`
-   - **Magic:** `dnd char spells "MyHero" use 1 1`
-   - **Loot:** `dnd char inventory "MyHero" add "Magic Sword"`
-
-4. **Level Up:**
-   ```bash
-   dnd char levelup "MyHero"
-   # Gains new features, HP, spell slots
-   ```
-
-5. **Rest and Recover:**
-   ```bash
-   dnd char spells "MyHero" restore 1 2  # Long rest recovery
-   dnd char hp "MyHero" heal 10          # Healing
-   ```
-
-Characters are saved as JSON files in `~/.dnd-cli/` with complete D&D 5e mechanics for all PHB races, classes, and backgrounds, including runtime tracking for HP, spells, inventory, conditions, and inspiration.
-
-## TUI (Terminal User Interface)
-
-Launch the interactive TUI for a more immersive experience:
-
-```bash
-dnd tui
-```
-
-### Features in TUI
-
-- **Browse All PHB Content:** Browse through all the Player's Handbook content, including spells, monsters, items, and more.
-- **Fuzzy Search:** Type `spell`, `monster`, or `item` to browse lists with real-time filtering. Start typing to narrow down results.
-- **Character Creation:** Guided step-by-step character creation following D&D 5e rules - select name, alignment, species (with racial traits preview), class (with features), background, ability scores (Standard Array, Roll, or Point Buy), proficiencies, equipment, and spellcasting.
-- **Navigation:** Use ↑↓ or jk keys to scroll lists, Enter to select, / to search within lists, Esc to go back.
-- **Scrolling:** Use ↑/↓ keys to scroll through long content in the output area.
-- **Help:** Type `help` or `?` for available commands.
-- **Quitting:** Press Ctrl+C to exit from any screen. Press Esc to exit main or go back in sub-menus.
-
-### Example TUI Workflow
-
-1. Run `dnd tui`
-2. Type `spell` and press Enter to browse spells.
-3. Type "fire" to filter to fireball-related spells.
-4. Use arrows to select, Enter to view details.
-5. Press Esc to return to main prompt.
-6. Type `roll 1d20` for dice rolls.
-7. Select "Create Character" from the main menu to start guided creation.
-
-The TUI provides themed error messages and a clean, scrollable interface for all CLI features.
+The TUI provides an immersive, terminal-native experience for all D&D 5e content with smooth animations, themed styling, and intuitive keyboard controls.
 
 ## Contributing
 
@@ -234,6 +144,9 @@ The TUI provides themed error messages and a clean, scrollable interface for all
 - [x] Implement full character creation and management features
 - [x] Expand test coverage for core functionality
 - [x] Refactor error message generation to reduce code duplication
+- [x] Remove legacy CLI components and transition to pure TUI architecture
+- [x] Clean up unused data directories and scripts
+- [x] Update documentation to reflect current TUI-only structure
 
 ## License
 

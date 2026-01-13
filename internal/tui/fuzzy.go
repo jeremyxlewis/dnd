@@ -52,26 +52,27 @@ func newFuzzyModel(mode string) fuzzyModel {
 
 	switch mode {
 	case "spell":
-		titles = getUniqueTitles(data.AllSpells, func(s data.Spell) string { return s.Name })
+		// Use legacy data for comprehensive search
+		titles = getUniqueTitles(data.AllLegacySpells, func(s data.Spell) string { return s.Name })
 	case "monster":
-		titles = getUniqueTitles(data.AllMonsters, func(m data.Monster) string { return m.Name })
+		titles = getUniqueTitles(data.AllLegacyMonsters, func(m data.Monster) string { return m.Name })
 	case "item":
-		titles = getUniqueTitles(data.AllItems, func(i data.Item) string { return i.Name })
+		titles = getUniqueTitles(data.AllLegacyItems, func(i data.Item) string { return i.Name })
 	case "race":
-		titles = getUniqueTitles(data.AllSpecies, func(s data.Species) string { return s.Name })
+		titles = getUniqueTitles(data.AllLegacySpecies, func(s data.Species) string { return s.Name })
 	case "background":
-		titles = getUniqueTitles(data.AllBackgrounds, func(b data.Background) string { return b.Name })
+		titles = getUniqueTitles(data.AllLegacyBackgrounds, func(b data.Background) string { return b.Name })
 	case "class":
-		titles = getUniqueTitles(data.AllClasses, func(c data.Class) string { return c.Name })
+		titles = getUniqueTitles(data.AllLegacyClasses, func(c data.Class) string { return c.Name })
 	case "rules":
 		titles = []string{"combat", "conditions", "ability checks", "initiative", "actions"}
 	case "global":
-		titles = append(titles, getUniqueTitles(data.AllSpells, func(s data.Spell) string { return "Spell: " + s.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllMonsters, func(m data.Monster) string { return "Monster: " + m.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllItems, func(i data.Item) string { return "Item: " + i.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllSpecies, func(s data.Species) string { return "Race: " + s.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllBackgrounds, func(b data.Background) string { return "Background: " + b.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllClasses, func(c data.Class) string { return "Class: " + c.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacySpells, func(s data.Spell) string { return "Spell: " + s.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacyMonsters, func(m data.Monster) string { return "Monster: " + m.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacyItems, func(i data.Item) string { return "Item: " + i.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacySpecies, func(s data.Species) string { return "Race: " + s.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacyBackgrounds, func(b data.Background) string { return "Background: " + b.Name })...)
+		titles = append(titles, getUniqueTitles(data.AllLegacyClasses, func(c data.Class) string { return "Class: " + c.Name })...)
 		titles = append(titles, "Rules: combat", "Rules: conditions", "Rules: ability checks", "Rules: initiative", "Rules: actions")
 	}
 

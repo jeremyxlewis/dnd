@@ -11,29 +11,3 @@ const (
 	TextInputWidth        = 40
 	HistoryLimit          = 100
 )
-
-// Step constants for charCreateModel
-const (
-	StepName = iota
-	StepAlignment
-	StepPlayer
-	StepLevel
-	StepScoreMethod
-	StepScores
-	StepSpecies
-	StepSpeciesInfo
-	StepClass
-	StepClassInfo
-	StepBackground
-	StepBackgroundInfo
-	StepProficiencies
-	StepEquipment
-	StepSpellcasting
-	StepConfirm
-)
-
-// Input modes for initiativeTracker
-const (
-	InputModeAddName = "add_name"
-	InputModeAddInit = "add_init"
-)
