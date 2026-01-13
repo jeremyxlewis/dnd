@@ -7,7 +7,7 @@ An interactive terminal user interface for Dungeons & Dragons players and Dungeo
 *   **Interactive TUI:** Full-screen terminal interface for browsing and searching content with fuzzy matching.
 *   **Spell Browser:** Browse through all D&D 5e spells with detailed information including level, school, casting time, range, components, duration, and descriptions.
 *   **Monster Compendium:** Complete monster stat blocks with abilities, actions, skills, and challenge ratings.
-*   **Character Creation:** Guided step-by-step character creation following D&D 5e rules - select name, alignment, species, class, background, ability scores, proficiencies, equipment, and spellcasting.
+*   **Rules Reference:** Look up D&D 5e rules covering combat, conditions, ability checks, and more.
 *   **Dice Rolling:** Interactive dice rolling with standard D&D notation and visual feedback.
 *   **Fuzzy Search:** Real-time filtering across all content types - just start typing to narrow results.
 *   **Keyboard Navigation:** Full keyboard support with arrow keys, j/k navigation, search shortcuts, and intuitive controls.
@@ -58,9 +58,8 @@ To run `dnd` from anywhere:
 
 When you launch `./dnd`, you'll see:
 
-- **Welcome Screen:** Interactive menu with main options
-- **Content Browser:** Access to spells, monsters, items, species, backgrounds, and classes
-- **Character Creation:** Guided character builder with D&D 5e rules
+- **Welcome Screen:** Interactive command interface with fuzzy search
+- **Content Browser:** Access to spells, monsters, items, species, backgrounds, classes, and rules
 - **Dice Roller:** Interactive dice interface with visual feedback
 - **Help System:** Built-in help and command reference
 
@@ -87,19 +86,20 @@ When you launch `./dnd`, you'll see:
 
 3. **Other Content:**
    - `species`: Browse available races and racial traits
-   - `backgrounds`: View background features and proficiencies
+   - `backgrounds`: View background features and proficiencies  
    - `classes`: Browse class information and features
+   - `rules`: Look up D&D 5e rules and mechanics
 
-### Character Creation
+### Rules Reference
 
-Select "Create Character" from main menu to start guided creation:
+Look up D&D 5e rules by typing `rules` at the main prompt:
 
-1. **Basic Info:** Name and alignment
-2. **Species Selection:** Choose from 40+ races with trait previews
-3. **Class Selection:** 12 D&D classes with feature descriptions
-4. **Background Selection:** 13 backgrounds with equipment and proficiencies
-5. **Ability Scores:** Standard Array, Roll, or Point Buy
-6. **Review & Confirm:** Complete character sheet overview
+- **Combat:** Attack rolls, damage, critical hits, and combat flow
+- **Conditions:** All condition effects and duration rules  
+- **Ability Checks:** How to make ability checks and saving throws
+- **Skill Usage:** Guidelines for using skills in various situations
+
+Type `rules combat`, `rules conditions`, or browse the complete ruleset.
 
 ### Dice Rolling
 
@@ -133,7 +133,7 @@ All content browsers support:
 [Roll result shown]
 ```
 
-The TUI provides an immersive, terminal-native experience for all D&D 5e content with smooth animations, themed styling, and intuitive keyboard controls.
+The TUI provides an immersive, terminal-native experience for all D&D 5e content with fuzzy search, themed styling, and intuitive keyboard controls. Perfect for quick rule lookups, monster stats, spell references, and dice rolling during your D&D sessions.
 
 ## Contributing
 
@@ -141,12 +141,13 @@ The TUI provides an immersive, terminal-native experience for all D&D 5e content
 
 - [x] Replace deprecated `ioutil` functions with `os` equivalents in character handling
 - [x] Optimize random seeding to avoid reseeding on every operation
-- [x] Implement full character creation and management features
+- [ ] Implement full character creation and management features
 - [x] Expand test coverage for core functionality
 - [x] Refactor error message generation to reduce code duplication
 - [x] Remove legacy CLI components and transition to pure TUI architecture
 - [x] Clean up unused data directories and scripts
 - [x] Update documentation to reflect current TUI-only structure
+- [x] Remove outdated character creation references from README
 
 ## License
 
