@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -79,8 +80,16 @@ func getUniqueTitles[T any](slice []T, getTitle func(T) string) []string {
 
 // formatDescription formats long descriptions for better readability.
 func formatDescription(desc string) string {
-	// Add line breaks after sentences
+	// Clean up existing formatting first
+	desc = strings.ReplaceAll(desc, "\n", " ")
+
+	// Add line breaks after complete sentences (only if followed by space)
 	desc = strings.ReplaceAll(desc, ". ", ".\n\n")
+
+	// Add line breaks after sentence fragments followed by uppercase letters
+	re := regexp.MustCompile(`([.!?]) ([A-Z])`)
+	desc = re.ReplaceAllString(desc, "$1\n\n$2")
+
 	// Add line breaks before common section headers
 	headers := []string{
 		"Hit Points", "Proficiencies", "Armor", "Weapons", "Tools", "Saving Throws", "Skills", "Equipment",
@@ -90,9 +99,22 @@ func formatDescription(desc string) string {
 		"Description", "Personality Trait", "Ideal", "Bond", "Flaw", "Backstory",
 	}
 	for _, h := range headers {
-		desc = strings.ReplaceAll(desc, h, "\n\n"+h)
+		// Only add line break if header is at start of line or after punctuation
+		desc = strings.ReplaceAll(desc, " "+h, "\n\n"+h)
+		desc = strings.ReplaceAll(desc, h+":", "\n\n"+h+":")
 	}
-	return desc
+
+	// Clean up extra whitespace
+	lines := strings.Split(desc, "\n")
+	var cleanLines []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			cleanLines = append(cleanLines, trimmed)
+		}
+	}
+
+	return strings.Join(cleanLines, "\n")
 }
 
 // renderPropertiesTable renders a simple table for key-value pairs.

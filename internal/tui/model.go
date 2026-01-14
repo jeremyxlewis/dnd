@@ -185,7 +185,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.Type == -1 && len(msg.Runes) == 1 && msg.Runes[0] == '/' {
+		// Check for forward slash key using rune comparison
+		if msg.Type == -1 && len(msg.Runes) == 1 && msg.Runes[0] == rune('/') {
 			m.textInput.SetValue("")
 			return m, func() tea.Msg { return switchModeMsg{"fuzzy_global"} }
 		}
@@ -257,7 +258,116 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomMonsterErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
-							content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
+
+							// Basic stats
+							if monster.Size != "" || monster.Type != "" || monster.Alignment != "" {
+								content += fmt.Sprintf("%s %s, %s\n\n", monster.Size, monster.Type, monster.Alignment)
+							}
+
+							// Basic stats
+							if monster.Size != "" || monster.Type != "" || monster.Alignment != "" {
+								content += fmt.Sprintf("%s %s, %s\n\n", monster.Size, monster.Type, monster.Alignment)
+							}
+
+							// AC and HP
+							if monster.ArmorClass > 0 {
+								content += fmt.Sprintf("Armor Class: %d", monster.ArmorClass)
+								if monster.ArmorType != "" {
+									content += fmt.Sprintf(" (%s)", monster.ArmorType)
+								}
+								content += "\n"
+							}
+
+							if monster.HitPoints > 0 {
+								content += fmt.Sprintf("Hit Points: %d", monster.HitPoints)
+								if monster.HitDice != "" {
+									content += fmt.Sprintf(" (%s)", monster.HitDice)
+								}
+								content += "\n"
+							}
+
+							if monster.Speed != "" {
+								content += fmt.Sprintf("Speed: %s\n", monster.Speed)
+							}
+
+							// Ability scores
+							if len(monster.Stats) > 0 {
+								content += "\n"
+								stats := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
+								for _, stat := range stats {
+									if value, exists := monster.Stats[strings.ToLower(stat)]; exists {
+										mod := (value - 10) / 2
+										modStr := ""
+										if mod >= 0 {
+											modStr = fmt.Sprintf("+%d", mod)
+										} else {
+											modStr = fmt.Sprintf("%d", mod)
+										}
+										content += fmt.Sprintf("%s %d (%s) ", stat, value, modStr)
+									}
+								}
+								content += "\n\n"
+							}
+
+							// Skills
+							if len(monster.Skills) > 0 {
+								content += "Skills: "
+								var skillParts []string
+								for skill, bonus := range monster.Skills {
+									if bonus >= 0 {
+										skillParts = append(skillParts, fmt.Sprintf("%s +%d", skill, bonus))
+									} else {
+										skillParts = append(skillParts, fmt.Sprintf("%s %d", skill, bonus))
+									}
+								}
+								content += strings.Join(skillParts, ", ")
+								content += "\n\n"
+							}
+
+							// Senses and languages
+							if len(monster.Senses) > 0 {
+								content += "Senses: "
+								var senseParts []string
+								for sense, value := range monster.Senses {
+									senseParts = append(senseParts, fmt.Sprintf("%s %v", sense, value))
+								}
+								content += strings.Join(senseParts, ", ")
+								content += "\n"
+							}
+
+							if len(monster.Languages) > 0 {
+								content += fmt.Sprintf("Languages: %s\n", strings.Join(monster.Languages, ", "))
+							}
+
+							if monster.Challenge != "" {
+								content += fmt.Sprintf("Challenge: %s", monster.Challenge)
+								if monster.ChallengeXP > 0 {
+									content += fmt.Sprintf(" (%d XP)", monster.ChallengeXP)
+								}
+								content += "\n"
+							}
+
+							// Special abilities
+							if len(monster.SpecialAbilities) > 0 {
+								content += "\nSpecial Abilities:\n"
+								for _, ability := range monster.SpecialAbilities {
+									content += fmt.Sprintf("%s: %s\n", ability.Name, ability.Description)
+								}
+							}
+
+							// Actions
+							if len(monster.Actions) > 0 {
+								content += "\nActions:\n"
+								for _, action := range monster.Actions {
+									content += fmt.Sprintf("%s: %s\n", action.Name, action.Description)
+								}
+							}
+
+							// Description
+							if monster.Description != "" {
+								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(monster.Description))
+							}
+
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -561,7 +671,111 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomMonsterErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", monster.Name)
-			content += fmt.Sprintf("Description:\n%s\n", formatDescription(monster.Description))
+
+			// Basic stats
+			if monster.Size != "" || monster.Type != "" || monster.Alignment != "" {
+				content += fmt.Sprintf("%s %s, %s\n\n", monster.Size, monster.Type, monster.Alignment)
+			}
+
+			// AC and HP
+			if monster.ArmorClass > 0 {
+				content += fmt.Sprintf("Armor Class: %d", monster.ArmorClass)
+				if monster.ArmorType != "" {
+					content += fmt.Sprintf(" (%s)", monster.ArmorType)
+				}
+				content += "\n"
+			}
+
+			if monster.HitPoints > 0 {
+				content += fmt.Sprintf("Hit Points: %d", monster.HitPoints)
+				if monster.HitDice != "" {
+					content += fmt.Sprintf(" (%s)", monster.HitDice)
+				}
+				content += "\n"
+			}
+
+			if monster.Speed != "" {
+				content += fmt.Sprintf("Speed: %s\n", monster.Speed)
+			}
+
+			// Ability scores
+			if len(monster.Stats) > 0 {
+				content += "\n"
+				stats := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
+				for _, stat := range stats {
+					if value, exists := monster.Stats[strings.ToLower(stat)]; exists {
+						mod := (value - 10) / 2
+						modStr := ""
+						if mod >= 0 {
+							modStr = fmt.Sprintf("+%d", mod)
+						} else {
+							modStr = fmt.Sprintf("%d", mod)
+						}
+						content += fmt.Sprintf("%s %d (%s) ", stat, value, modStr)
+					}
+				}
+				content += "\n\n"
+			}
+
+			// Skills
+			if len(monster.Skills) > 0 {
+				content += "Skills: "
+				var skillParts []string
+				for skill, bonus := range monster.Skills {
+					if bonus >= 0 {
+						skillParts = append(skillParts, fmt.Sprintf("%s +%d", skill, bonus))
+					} else {
+						skillParts = append(skillParts, fmt.Sprintf("%s %d", skill, bonus))
+					}
+				}
+				content += strings.Join(skillParts, ", ")
+				content += "\n\n"
+			}
+
+			// Senses and languages
+			if len(monster.Senses) > 0 {
+				content += "Senses: "
+				var senseParts []string
+				for sense, value := range monster.Senses {
+					senseParts = append(senseParts, fmt.Sprintf("%s %v", sense, value))
+				}
+				content += strings.Join(senseParts, ", ")
+				content += "\n"
+			}
+
+			if len(monster.Languages) > 0 {
+				content += fmt.Sprintf("Languages: %s\n", strings.Join(monster.Languages, ", "))
+			}
+
+			if monster.Challenge != "" {
+				content += fmt.Sprintf("Challenge: %s", monster.Challenge)
+				if monster.ChallengeXP > 0 {
+					content += fmt.Sprintf(" (%d XP)", monster.ChallengeXP)
+				}
+				content += "\n"
+			}
+
+			// Special abilities
+			if len(monster.SpecialAbilities) > 0 {
+				content += "\nSpecial Abilities:\n"
+				for _, ability := range monster.SpecialAbilities {
+					content += fmt.Sprintf("%s: %s\n", ability.Name, ability.Description)
+				}
+			}
+
+			// Actions
+			if len(monster.Actions) > 0 {
+				content += "\nActions:\n"
+				for _, action := range monster.Actions {
+					content += fmt.Sprintf("%s: %s\n", action.Name, action.Description)
+				}
+			}
+
+			// Description
+			if monster.Description != "" {
+				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(monster.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "item":
