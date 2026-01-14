@@ -83,34 +83,45 @@ func formatDescription(desc string) string {
 	// Clean up existing formatting first
 	desc = strings.ReplaceAll(desc, "\n", " ")
 
-	// Add line breaks after complete sentences (only if followed by space)
+	// Add line breaks after complete sentences
 	desc = strings.ReplaceAll(desc, ". ", ".\n\n")
 
-	// Add line breaks after sentence fragments followed by uppercase letters
-	re := regexp.MustCompile(`([.!?]) ([A-Z])`)
+	// Add line breaks before ability names (common monster ability pattern)
+	re := regexp.MustCompile(`([.!?]) ([A-Z][a-z]+(?: [A-Z][a-z]+)*:)`)
 	desc = re.ReplaceAllString(desc, "$1\n\n$2")
 
-	// Add line breaks before common section headers
+	// Add line breaks after sentence fragments followed by uppercase letters (not ending in colon)
+	re2 := regexp.MustCompile(`([.!?]) ([A-Z][a-z]*(?: [a-z]+)*)`)
+	desc = re2.ReplaceAllString(desc, "$1\n\n$2")
+
+	// Add line breaks before common section headers and abilities
 	headers := []string{
 		"Hit Points", "Proficiencies", "Armor", "Weapons", "Tools", "Saving Throws", "Skills", "Equipment",
 		"Spellcasting", "Cantrips", "Spellbook", "Preparing and Casting Spells", "Arcane Recovery",
 		"Arcane Tradition", "Ability Score Improvement", "Creating a", "Quick Build", "The Wizard Level",
 		"Class Features", "Creature Type", "Size", "Speed", "Flight", "Talons", "Wind Caller",
+		"Dive Attack", "Melee Weapon Attack", "Ranged Weapon Attack", "Summon Air Elemental", "Hit:",
 		"Description", "Personality Trait", "Ideal", "Bond", "Flaw", "Backstory",
 	}
 	for _, h := range headers {
-		// Only add line break if header is at start of line or after punctuation
+		// Add line breaks for headers with various patterns
 		desc = strings.ReplaceAll(desc, " "+h, "\n\n"+h)
 		desc = strings.ReplaceAll(desc, h+":", "\n\n"+h+":")
+		if strings.HasSuffix(h, ":") {
+			desc = strings.ReplaceAll(desc, strings.TrimSuffix(h, ":"), "\n\n"+h)
+		}
 	}
 
-	// Clean up extra whitespace
+	// Clean up extra whitespace and ensure proper line breaks
 	lines := strings.Split(desc, "\n")
 	var cleanLines []string
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed != "" {
-			cleanLines = append(cleanLines, trimmed)
+			// Don't start a line with just punctuation
+			if !strings.HasPrefix(trimmed, ".") && !strings.HasPrefix(trimmed, "!") && !strings.HasPrefix(trimmed, "?") {
+				cleanLines = append(cleanLines, trimmed)
+			}
 		}
 	}
 

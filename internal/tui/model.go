@@ -382,7 +382,43 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomItemErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", it.Name)
-							content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
+
+							// Type and basic info
+							if it.Type != "" {
+								content += fmt.Sprintf("Type: %s\n", it.Type)
+							}
+
+							if it.Value != "" || it.Weight != "" {
+								if it.Value != "" {
+									content += fmt.Sprintf("Value: %s", it.Value)
+								}
+								if it.Weight != "" {
+									if it.Value != "" {
+										content += ", "
+									}
+									content += fmt.Sprintf("Weight: %s", it.Weight)
+								}
+								content += "\n"
+							}
+
+							// Damage info
+							if it.Damage != "" {
+								content += fmt.Sprintf("Damage: %s", it.Damage)
+								if it.DamageType != "" {
+									content += fmt.Sprintf(" (%s)", it.DamageType)
+								}
+								content += "\n"
+							}
+
+							if it.Property != "" {
+								content += fmt.Sprintf("Properties: %s\n", it.Property)
+							}
+
+							// Description
+							if it.Description != "" {
+								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(it.Description))
+							}
+
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -397,7 +433,42 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomSpeciesErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", species.Name)
-							content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
+
+							// Speed
+							if species.Speed != "" {
+								content += fmt.Sprintf("Speed: %s\n", species.Speed)
+							}
+
+							// Ability Bonuses
+							if len(species.AbilityBonuses) > 0 {
+								content += fmt.Sprintf("Ability Bonuses:\n")
+								for ability, bonus := range species.AbilityBonuses {
+									if bonus >= 0 {
+										content += fmt.Sprintf("  • %s +%d\n", strings.Title(ability), bonus)
+									} else {
+										content += fmt.Sprintf("  • %s %d\n", strings.Title(ability), bonus)
+									}
+								}
+							}
+
+							// Languages
+							if len(species.Languages) > 0 {
+								content += fmt.Sprintf("Languages: %s\n", strings.Join(species.Languages, ", "))
+							}
+
+							// Traits
+							if len(species.Traits) > 0 {
+								content += fmt.Sprintf("Traits:\n")
+								for _, trait := range species.Traits {
+									content += fmt.Sprintf("  • %s\n", trait)
+								}
+							}
+
+							// Description
+							if species.Description != "" {
+								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(species.Description))
+							}
+
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -412,7 +483,51 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomBackgroundErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", background.Name)
-							content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
+
+							// Skill Proficiencies
+							if len(background.SkillProficiencies) > 0 {
+								content += fmt.Sprintf("Skill Proficiencies: %s\n", strings.Join(background.SkillProficiencies, ", "))
+							}
+
+							// Tool Proficiencies
+							if len(background.ToolProficiencies) > 0 {
+								content += fmt.Sprintf("Tool Proficiencies: %s\n", strings.Join(background.ToolProficiencies, ", "))
+							}
+
+							// Equipment
+							if len(background.Equipment) > 0 {
+								content += fmt.Sprintf("Starting Equipment:\n")
+								for _, item := range background.Equipment {
+									content += fmt.Sprintf("  • %s\n", item)
+								}
+							}
+
+							// Feature
+							if background.Feature != "" {
+								content += fmt.Sprintf("Feature:\n%s\n", formatDescription(background.Feature))
+							}
+
+							// Personality Traits
+							if len(background.PersonalityTraits) > 0 {
+								content += fmt.Sprintf("Personality Traits:\n")
+								for _, trait := range background.PersonalityTraits {
+									content += fmt.Sprintf("  • %s\n", trait)
+								}
+							}
+
+							// Ideals
+							if len(background.Ideals) > 0 {
+								content += fmt.Sprintf("Ideals:\n")
+								for _, ideal := range background.Ideals {
+									content += fmt.Sprintf("  • %s\n", ideal)
+								}
+							}
+
+							// Description
+							if background.Description != "" {
+								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(background.Description))
+							}
+
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -427,7 +542,55 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.setWrappedContent(getRandomClassErrorMessage(name), errorStyle)
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", class.Name)
-							content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
+
+							// Hit Die
+							if class.HitDie != "" {
+								content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
+							}
+
+							// Primary Ability
+							if class.PrimaryAbility != "" {
+								content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
+							}
+
+							// Saving Throws
+							if len(class.SavingThrows) > 0 {
+								content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
+							}
+
+							// Proficiencies
+							if len(class.ArmorProficiencies) > 0 {
+								content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
+							}
+							if len(class.WeaponProficiencies) > 0 {
+								content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
+							}
+							if len(class.ToolsProficiencies) > 0 {
+								content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
+							}
+
+							// Skills
+							if class.SkillsCount > 0 {
+								content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
+								if len(class.SkillsChoices) > 0 {
+									content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+								}
+								content += "\n"
+							}
+
+							// Equipment
+							if len(class.Equipment) > 0 {
+								content += fmt.Sprintf("Starting Equipment:\n")
+								for _, item := range class.Equipment {
+									content += fmt.Sprintf("  • %s\n", item)
+								}
+							}
+
+							// Description
+							if class.Description != "" {
+								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+							}
+
 							m.setWrappedContent(content, infoCardStyle)
 						}
 					}
@@ -662,7 +825,46 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomSpellErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", spell.Name)
-			content += formatDescription(spell.Description)
+
+			// Level and School
+			if spell.Level > 0 || spell.School != "" {
+				if spell.Level > 0 {
+					content += fmt.Sprintf("Level %d", spell.Level)
+				}
+				if spell.School != "" {
+					if spell.Level > 0 {
+						content += " "
+					}
+					content += fmt.Sprintf("%s", spell.School)
+				}
+				content += "\n"
+			}
+
+			// Casting Time
+			if spell.CastingTime != "" {
+				content += fmt.Sprintf("Casting Time: %s\n", spell.CastingTime)
+			}
+
+			// Range
+			if spell.Range != "" {
+				content += fmt.Sprintf("Range: %s\n", spell.Range)
+			}
+
+			// Components
+			if len(spell.Components) > 0 {
+				content += fmt.Sprintf("Components: %s\n", strings.Join(spell.Components, ", "))
+			}
+
+			// Duration
+			if spell.Duration != "" {
+				content += fmt.Sprintf("Duration: %s\n", spell.Duration)
+			}
+
+			// Description
+			if spell.Description != "" {
+				content += fmt.Sprintf("\n%s\n", formatDescription(spell.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "monster":
@@ -784,7 +986,43 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomItemErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", it.Name)
-			content += fmt.Sprintf("Description:\n%s\n", formatDescription(it.Description))
+
+			// Type and basic info
+			if it.Type != "" {
+				content += fmt.Sprintf("Type: %s\n", it.Type)
+			}
+
+			if it.Value != "" || it.Weight != "" {
+				if it.Value != "" {
+					content += fmt.Sprintf("Value: %s", it.Value)
+				}
+				if it.Weight != "" {
+					if it.Value != "" {
+						content += ", "
+					}
+					content += fmt.Sprintf("Weight: %s", it.Weight)
+				}
+				content += "\n"
+			}
+
+			// Damage info
+			if it.Damage != "" {
+				content += fmt.Sprintf("Damage: %s", it.Damage)
+				if it.DamageType != "" {
+					content += fmt.Sprintf(" (%s)", it.DamageType)
+				}
+				content += "\n"
+			}
+
+			if it.Property != "" {
+				content += fmt.Sprintf("Properties: %s\n", it.Property)
+			}
+
+			// Description
+			if it.Description != "" {
+				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(it.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "race":
@@ -793,7 +1031,42 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomSpeciesErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", species.Name)
-			content += fmt.Sprintf("Description:\n%s\n", formatDescription(species.Description))
+
+			// Speed
+			if species.Speed != "" {
+				content += fmt.Sprintf("Speed: %s\n", species.Speed)
+			}
+
+			// Ability Bonuses
+			if len(species.AbilityBonuses) > 0 {
+				content += fmt.Sprintf("Ability Bonuses:\n")
+				for ability, bonus := range species.AbilityBonuses {
+					if bonus >= 0 {
+						content += fmt.Sprintf("  • %s +%d\n", strings.Title(ability), bonus)
+					} else {
+						content += fmt.Sprintf("  • %s %d\n", strings.Title(ability), bonus)
+					}
+				}
+			}
+
+			// Languages
+			if len(species.Languages) > 0 {
+				content += fmt.Sprintf("Languages: %s\n", strings.Join(species.Languages, ", "))
+			}
+
+			// Traits
+			if len(species.Traits) > 0 {
+				content += fmt.Sprintf("Traits:\n")
+				for _, trait := range species.Traits {
+					content += fmt.Sprintf("  • %s\n", trait)
+				}
+			}
+
+			// Description
+			if species.Description != "" {
+				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(species.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "background":
@@ -802,7 +1075,51 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomBackgroundErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", background.Name)
-			content += fmt.Sprintf("Description:\n%s\n", formatDescription(background.Description))
+
+			// Skill Proficiencies
+			if len(background.SkillProficiencies) > 0 {
+				content += fmt.Sprintf("Skill Proficiencies: %s\n", strings.Join(background.SkillProficiencies, ", "))
+			}
+
+			// Tool Proficiencies
+			if len(background.ToolProficiencies) > 0 {
+				content += fmt.Sprintf("Tool Proficiencies: %s\n", strings.Join(background.ToolProficiencies, ", "))
+			}
+
+			// Equipment
+			if len(background.Equipment) > 0 {
+				content += fmt.Sprintf("Starting Equipment:\n")
+				for _, item := range background.Equipment {
+					content += fmt.Sprintf("  • %s\n", item)
+				}
+			}
+
+			// Feature
+			if background.Feature != "" {
+				content += fmt.Sprintf("Feature:\n%s\n", formatDescription(background.Feature))
+			}
+
+			// Personality Traits
+			if len(background.PersonalityTraits) > 0 {
+				content += fmt.Sprintf("Personality Traits:\n")
+				for _, trait := range background.PersonalityTraits {
+					content += fmt.Sprintf("  • %s\n", trait)
+				}
+			}
+
+			// Ideals
+			if len(background.Ideals) > 0 {
+				content += fmt.Sprintf("Ideals:\n")
+				for _, ideal := range background.Ideals {
+					content += fmt.Sprintf("  • %s\n", ideal)
+				}
+			}
+
+			// Description
+			if background.Description != "" {
+				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(background.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "class":
@@ -811,7 +1128,55 @@ func displayItem(mm *mainModel, category, name string) {
 			mm.setWrappedContent(getRandomClassErrorMessage(name), errorStyle)
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", class.Name)
-			content += fmt.Sprintf("Description:\n%s\n", formatDescription(class.Description))
+
+			// Hit Die
+			if class.HitDie != "" {
+				content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
+			}
+
+			// Primary Ability
+			if class.PrimaryAbility != "" {
+				content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
+			}
+
+			// Saving Throws
+			if len(class.SavingThrows) > 0 {
+				content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
+			}
+
+			// Proficiencies
+			if len(class.ArmorProficiencies) > 0 {
+				content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
+			}
+			if len(class.WeaponProficiencies) > 0 {
+				content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
+			}
+			if len(class.ToolsProficiencies) > 0 {
+				content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
+			}
+
+			// Skills
+			if class.SkillsCount > 0 {
+				content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
+				if len(class.SkillsChoices) > 0 {
+					content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+				}
+				content += "\n"
+			}
+
+			// Equipment
+			if len(class.Equipment) > 0 {
+				content += fmt.Sprintf("Starting Equipment:\n")
+				for _, item := range class.Equipment {
+					content += fmt.Sprintf("  • %s\n", item)
+				}
+			}
+
+			// Description
+			if class.Description != "" {
+				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+			}
+
 			mm.setWrappedContent(content, infoCardStyle)
 		}
 	case "rules":
