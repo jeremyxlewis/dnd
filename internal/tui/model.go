@@ -102,7 +102,7 @@ func newMainModel(width, height int) mainModel {
 		history:       []string{},
 		historyIndex:  0,
 		prevValue:     "",
-		status:        "Ready. Type 'help' or '?' for commands.",
+		status:        "Ready. Using Compendium data. Type 'help' or '?' for commands.",
 		currentPrompt: getRandomPrompt(),
 		fullScreen:    false,
 	}
@@ -115,6 +115,11 @@ func NewModel(width, height int) topModel {
 
 // getHelpText returns a formatted help text for the TUI.
 func getHelpText() string {
+	currentFile := data.GetCurrentCompendiumFile()
+	if currentFile == "" {
+		currentFile = "None"
+	}
+
 	return `Available Commands:
 
 Core Commands:
@@ -131,6 +136,10 @@ Core Commands:
      class [name]        - Browse/filter class list or look up specific class
      rules [topic]       - Look up PHB rules (combat, conditions, ability checks, etc.)
 
+ Data Source:
+     compendium         - Show currently loaded Compendium file
+     compendium list    - List available Compendium files
+
  Other:
    help or ?           - Show this help message
 
@@ -143,7 +152,9 @@ Core Commands:
      quit or exit        - Quit the TUI
 
   In lists, type to filter, use arrows to navigate, Enter to select, Esc to cancel.
- Use ↑/↓ to scroll output or navigate command history.`
+ Use ↑/↓ to scroll output or navigate command history.
+
+Current Compendium: ` + currentFile
 }
 
 // Init initializes the main TUI model. It can return a command to perform initial actions.
@@ -619,6 +630,29 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "search":
 					m.textInput.SetValue("")
 					return m, func() tea.Msg { return switchModeMsg{"fuzzy_global"} }
+				case "compendium":
+					if len(args) == 1 {
+						currentFile := data.GetCurrentCompendiumFile()
+						if currentFile == "" {
+							m.setWrappedContent("No Compendium file currently loaded.", errorStyle)
+						} else {
+							content := fmt.Sprintf("Currently loaded Compendium:\n\n%s\n\nUse 'compendium list' to see available files.", currentFile)
+							m.setWrappedContent(content, infoCardStyle)
+						}
+					} else if args[1] == "list" {
+						files, err := data.GetAvailableCompendiumFiles()
+						if err != nil {
+							m.setWrappedContent(fmt.Sprintf("Error listing compendium files: %v", err), errorStyle)
+						} else {
+							content := "Available Compendium files:\n\n"
+							for _, file := range files {
+								content += fmt.Sprintf("  • %s\n", file)
+							}
+							m.setWrappedContent(content, infoCardStyle)
+						}
+					} else {
+						m.setWrappedContent("Usage: compendium [list]\n  - compendium: Show currently loaded file\n  - compendium list: List available files", errorStyle)
+					}
 				case "quit", "exit":
 					return m, tea.Quit
 				default:

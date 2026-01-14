@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -118,133 +119,246 @@ type Class struct {
 
 // Global store for loaded data
 var (
-	// SRD Parser instance
+	// SRD Parser instance (legacy)
 	srdParser *SRDParser
+	// Compendium Parser instance
+	compendiumParser *CompendiumParser
+	// Currently loaded compendium file
+	currentCompendiumFile string
 )
 
-// LoadData loads all necessary JSON data into memory
+// LoadData loads all necessary data from Compendium XML files
 func LoadData(dataPath string) error {
-	// Initialize SRD parser
-	srdParser = NewSRDParser()
-
-	// Try to load SRD data from dnd-5e-srd directory
-	srdPath := filepath.Join(dataPath, "..", "dnd-5e-srd", "5esrd.json")
-	err := srdParser.LoadSRD(srdPath)
-	if err != nil {
-		return fmt.Errorf("failed to load SRD data: %w", err)
+	// Use Compendium directory
+	compendiumDir := dataPath
+	if filepath.Base(dataPath) != "Compendium" {
+		compendiumDir = filepath.Join(dataPath, "Compendium")
 	}
 
+	// Check if Compendium directory exists
+	if _, err := os.Stat(compendiumDir); os.IsNotExist(err) {
+		return fmt.Errorf("Compendium directory not found: %s", compendiumDir)
+	}
+
+	// Get list of available compendium files
+	files, err := GetCompendiumFileList(compendiumDir)
+	if err != nil {
+		return fmt.Errorf("failed to list compendium files: %w", err)
+	}
+
+	if len(files) == 0 {
+		return fmt.Errorf("no compendium files found in %s", compendiumDir)
+	}
+
+	// Default to Complete_Compendium.xml if available, otherwise use first file
+	compendiumFile := GetDefaultCompendiumFile()
+	found := false
+	for _, file := range files {
+		if file == compendiumFile {
+			found = true
+			break
+		}
+	}
+	if !found {
+		compendiumFile = files[0]
+	}
+
+	return LoadCompendiumData(compendiumDir, compendiumFile)
+}
+
+// LoadCompendiumData loads a specific compendium file
+func LoadCompendiumData(compendiumDir, filename string) error {
+	// Validate file exists
+	if err := ValidateCompendiumFile(compendiumDir, filename); err != nil {
+		return err
+	}
+
+	// Initialize Compendium parser
+	compendiumParser = NewCompendiumParser()
+
+	// Load the compendium file
+	compendiumPath := filepath.Join(compendiumDir, filename)
+	err := compendiumParser.LoadCompendium(compendiumPath)
+	if err != nil {
+		return fmt.Errorf("failed to load compendium file '%s': %w", filename, err)
+	}
+
+	currentCompendiumFile = filename
 	return nil
 }
 
+// GetAvailableCompendiumFiles returns list of available compendium files
+func GetAvailableCompendiumFiles() ([]string, error) {
+	// Use Compendium directory
+	compendiumDir := "./Compendium"
+	files, err := GetCompendiumFileList(compendiumDir)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+// GetCurrentCompendiumFile returns the currently loaded compendium file
+func GetCurrentCompendiumFile() string {
+	return currentCompendiumFile
+}
+
 // GetSpellByName searches for a spell by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetSpellByName(name string) (*Spell, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetSpellByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetSpellByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - spell '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - spell '%s' not found", name)
 }
 
 // GetMonsterByName searches for a monster by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetMonsterByName(name string) (*Monster, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetMonsterByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetMonsterByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - monster '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - monster '%s' not found", name)
 }
 
 // GetItemByName searches for an item by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetItemByName(name string) (*Item, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetItemByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetItemByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - item '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - item '%s' not found", name)
 }
 
 // GetSpeciesByName searches for a species by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetSpeciesByName(name string) (*Species, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetRaceByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetRaceByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - species '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - species '%s' not found", name)
 }
 
 // GetBackgroundByName searches for a background by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetBackgroundByName(name string) (*Background, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetBackgroundByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetBackgroundByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - background '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - background '%s' not found", name)
 }
 
 // GetClassByName searches for a class by its name (case-insensitive)
-// Searches SRD data only
+// Searches Compendium data
 func GetClassByName(name string) (*Class, error) {
-	// Search SRD data only
+	// Search Compendium data first
+	if compendiumParser != nil {
+		return compendiumParser.GetClassByName(name)
+	}
+
+	// Fallback to SRD data if available
 	if srdParser != nil {
 		return srdParser.GetClassByName(name)
 	}
 
-	return nil, fmt.Errorf("SRD data not loaded - class '%s' not found", name)
+	return nil, fmt.Errorf("No data loaded - class '%s' not found", name)
 }
 
-// GetSRDSpellNames returns all spell names from SRD data
+// GetSRDSpellNames returns all spell names from loaded data
 func GetSRDSpellNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetSpellNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetSpellNames()
 	}
 	return []string{}
 }
 
-// GetSRDMonsterNames returns all monster names from SRD data
+// GetSRDMonsterNames returns all monster names from loaded data
 func GetSRDMonsterNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetMonsterNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetMonsterNames()
 	}
 	return []string{}
 }
 
-// GetSRDItemNames returns all item names from SRD data
+// GetSRDItemNames returns all item names from loaded data
 func GetSRDItemNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetItemNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetItemNames()
 	}
 	return []string{}
 }
 
-// GetSRDClassNames returns all class names from SRD data
+// GetSRDClassNames returns all class names from loaded data
 func GetSRDClassNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetClassNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetClassNames()
 	}
 	return []string{}
 }
 
-// GetSRDRaceNames returns all race names from SRD data
+// GetSRDRaceNames returns all race names from loaded data
 func GetSRDRaceNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetRaceNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetRaceNames()
 	}
 	return []string{}
 }
 
-// GetSRDBackgroundNames returns all background names from SRD data
+// GetSRDBackgroundNames returns all background names from loaded data
 func GetSRDBackgroundNames() []string {
+	if compendiumParser != nil {
+		return compendiumParser.GetBackgroundNames()
+	}
 	if srdParser != nil {
 		return srdParser.GetBackgroundNames()
 	}
