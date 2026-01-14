@@ -543,52 +543,61 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							content := fmt.Sprintf("--- %s ---\n\n", class.Name)
 
-							// Hit Die
-							if class.HitDie != "" {
-								content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
-							}
+							// Check if we have detailed data or just basic description
+							hasDetailedData := class.HitDie != "" || class.PrimaryAbility != "" || len(class.SavingThrows) > 0 || len(class.ArmorProficiencies) > 0
 
-							// Primary Ability
-							if class.PrimaryAbility != "" {
-								content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
-							}
-
-							// Saving Throws
-							if len(class.SavingThrows) > 0 {
-								content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
-							}
-
-							// Proficiencies
-							if len(class.ArmorProficiencies) > 0 {
-								content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
-							}
-							if len(class.WeaponProficiencies) > 0 {
-								content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
-							}
-							if len(class.ToolsProficiencies) > 0 {
-								content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
-							}
-
-							// Skills
-							if class.SkillsCount > 0 {
-								content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
-								if len(class.SkillsChoices) > 0 {
-									content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+							if hasDetailedData {
+								// Hit Die
+								if class.HitDie != "" {
+									content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
 								}
-								content += "\n"
-							}
 
-							// Equipment
-							if len(class.Equipment) > 0 {
-								content += fmt.Sprintf("Starting Equipment:\n")
-								for _, item := range class.Equipment {
-									content += fmt.Sprintf("  • %s\n", item)
+								// Primary Ability
+								if class.PrimaryAbility != "" {
+									content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
+								}
+
+								// Saving Throws
+								if len(class.SavingThrows) > 0 {
+									content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
+								}
+
+								// Proficiencies
+								if len(class.ArmorProficiencies) > 0 {
+									content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
+								}
+								if len(class.WeaponProficiencies) > 0 {
+									content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
+								}
+								if len(class.ToolsProficiencies) > 0 {
+									content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
+								}
+
+								// Skills
+								if class.SkillsCount > 0 {
+									content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
+									if len(class.SkillsChoices) > 0 {
+										content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+									}
+									content += "\n"
+								}
+
+								// Equipment
+								if len(class.Equipment) > 0 {
+									content += fmt.Sprintf("Starting Equipment:\n")
+									for _, item := range class.Equipment {
+										content += fmt.Sprintf("  • %s\n", item)
+									}
 								}
 							}
 
-							// Description
+							// Description (always show)
 							if class.Description != "" {
-								content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+								if hasDetailedData {
+									content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+								} else {
+									content += fmt.Sprintf("%s\n", formatDescription(class.Description))
+								}
 							}
 
 							m.setWrappedContent(content, infoCardStyle)
@@ -1129,52 +1138,61 @@ func displayItem(mm *mainModel, category, name string) {
 		} else {
 			content := fmt.Sprintf("--- %s ---\n\n", class.Name)
 
-			// Hit Die
-			if class.HitDie != "" {
-				content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
-			}
+			// Check if we have detailed data or just basic description
+			hasDetailedData := class.HitDie != "" || class.PrimaryAbility != "" || len(class.SavingThrows) > 0 || len(class.ArmorProficiencies) > 0
 
-			// Primary Ability
-			if class.PrimaryAbility != "" {
-				content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
-			}
-
-			// Saving Throws
-			if len(class.SavingThrows) > 0 {
-				content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
-			}
-
-			// Proficiencies
-			if len(class.ArmorProficiencies) > 0 {
-				content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
-			}
-			if len(class.WeaponProficiencies) > 0 {
-				content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
-			}
-			if len(class.ToolsProficiencies) > 0 {
-				content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
-			}
-
-			// Skills
-			if class.SkillsCount > 0 {
-				content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
-				if len(class.SkillsChoices) > 0 {
-					content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+			if hasDetailedData {
+				// Hit Die
+				if class.HitDie != "" {
+					content += fmt.Sprintf("Hit Die: %s\n", class.HitDie)
 				}
-				content += "\n"
-			}
 
-			// Equipment
-			if len(class.Equipment) > 0 {
-				content += fmt.Sprintf("Starting Equipment:\n")
-				for _, item := range class.Equipment {
-					content += fmt.Sprintf("  • %s\n", item)
+				// Primary Ability
+				if class.PrimaryAbility != "" {
+					content += fmt.Sprintf("Primary Ability: %s\n", class.PrimaryAbility)
+				}
+
+				// Saving Throws
+				if len(class.SavingThrows) > 0 {
+					content += fmt.Sprintf("Saving Throws: %s\n", strings.Join(class.SavingThrows, ", "))
+				}
+
+				// Proficiencies
+				if len(class.ArmorProficiencies) > 0 {
+					content += fmt.Sprintf("Armor Proficiencies: %s\n", strings.Join(class.ArmorProficiencies, ", "))
+				}
+				if len(class.WeaponProficiencies) > 0 {
+					content += fmt.Sprintf("Weapon Proficiencies: %s\n", strings.Join(class.WeaponProficiencies, ", "))
+				}
+				if len(class.ToolsProficiencies) > 0 {
+					content += fmt.Sprintf("Tools Proficiencies: %s\n", strings.Join(class.ToolsProficiencies, ", "))
+				}
+
+				// Skills
+				if class.SkillsCount > 0 {
+					content += fmt.Sprintf("Skills: Choose %d", class.SkillsCount)
+					if len(class.SkillsChoices) > 0 {
+						content += fmt.Sprintf(" from %s", strings.Join(class.SkillsChoices, ", "))
+					}
+					content += "\n"
+				}
+
+				// Equipment
+				if len(class.Equipment) > 0 {
+					content += fmt.Sprintf("Starting Equipment:\n")
+					for _, item := range class.Equipment {
+						content += fmt.Sprintf("  • %s\n", item)
+					}
 				}
 			}
 
-			// Description
+			// Description (always show)
 			if class.Description != "" {
-				content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+				if hasDetailedData {
+					content += fmt.Sprintf("\nDescription:\n%s\n", formatDescription(class.Description))
+				} else {
+					content += fmt.Sprintf("%s\n", formatDescription(class.Description))
+				}
 			}
 
 			mm.setWrappedContent(content, infoCardStyle)
