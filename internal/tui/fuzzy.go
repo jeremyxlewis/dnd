@@ -52,27 +52,39 @@ func newFuzzyModel(mode string) fuzzyModel {
 
 	switch mode {
 	case "spell":
-		// Use legacy data for comprehensive search
-		titles = getUniqueTitles(data.AllLegacySpells, func(s data.Spell) string { return s.Name })
+		titles = data.GetSRDSpellNames()
 	case "monster":
-		titles = getUniqueTitles(data.AllLegacyMonsters, func(m data.Monster) string { return m.Name })
+		titles = data.GetSRDMonsterNames()
 	case "item":
-		titles = getUniqueTitles(data.AllLegacyItems, func(i data.Item) string { return i.Name })
+		titles = data.GetSRDItemNames()
 	case "race":
-		titles = getUniqueTitles(data.AllLegacySpecies, func(s data.Species) string { return s.Name })
+		titles = data.GetSRDRaceNames()
 	case "background":
-		titles = getUniqueTitles(data.AllLegacyBackgrounds, func(b data.Background) string { return b.Name })
+		titles = data.GetSRDBackgroundNames()
 	case "class":
-		titles = getUniqueTitles(data.AllLegacyClasses, func(c data.Class) string { return c.Name })
+		titles = data.GetSRDClassNames()
 	case "rules":
 		titles = []string{"combat", "conditions", "ability checks", "initiative", "actions"}
 	case "global":
-		titles = append(titles, getUniqueTitles(data.AllLegacySpells, func(s data.Spell) string { return "Spell: " + s.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllLegacyMonsters, func(m data.Monster) string { return "Monster: " + m.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllLegacyItems, func(i data.Item) string { return "Item: " + i.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllLegacySpecies, func(s data.Species) string { return "Race: " + s.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllLegacyBackgrounds, func(b data.Background) string { return "Background: " + b.Name })...)
-		titles = append(titles, getUniqueTitles(data.AllLegacyClasses, func(c data.Class) string { return "Class: " + c.Name })...)
+		// Use SRD data for all categories
+		for _, name := range data.GetSRDSpellNames() {
+			titles = append(titles, "Spell: "+name)
+		}
+		for _, name := range data.GetSRDMonsterNames() {
+			titles = append(titles, "Monster: "+name)
+		}
+		for _, name := range data.GetSRDItemNames() {
+			titles = append(titles, "Item: "+name)
+		}
+		for _, name := range data.GetSRDRaceNames() {
+			titles = append(titles, "Race: "+name)
+		}
+		for _, name := range data.GetSRDBackgroundNames() {
+			titles = append(titles, "Background: "+name)
+		}
+		for _, name := range data.GetSRDClassNames() {
+			titles = append(titles, "Class: "+name)
+		}
 		titles = append(titles, "Rules: combat", "Rules: conditions", "Rules: ability checks", "Rules: initiative", "Rules: actions")
 	}
 
