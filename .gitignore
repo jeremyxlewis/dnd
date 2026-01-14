@@ -32,8 +32,10 @@ Thumbs.db
 *.tmp
 *.swp
 
-# Built binary
+# Built binaries
 dnd
+dnd-cli
+dnd-tui
 
 # Data files if not committed or large
 # data/
