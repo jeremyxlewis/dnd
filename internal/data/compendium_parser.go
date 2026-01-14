@@ -117,15 +117,16 @@ type XMLBackground struct {
 }
 
 type XMLClass struct {
-	XMLName     xml.Name `xml:"class"`
-	Name        string   `xml:"name"`
-	HD          string   `xml:"hd"`
-	Proficiency string   `xml:"proficiency"`
-	Skills      string   `xml:"numSkills"`
-	Armor       string   `xml:"armor"`
-	Weapons     string   `xml:"weapons"`
-	Tools       string   `xml:"tools"`
-	Equipment   string   `xml:"equipment"`
+	XMLName      xml.Name `xml:"class"`
+	Name         string   `xml:"name"`
+	HD           string   `xml:"hd"`
+	Proficiency  string   `xml:"proficiency"`
+	SpellAbility string   `xml:"spellAbility"`
+	Skills       string   `xml:"numSkills"`
+	Armor        string   `xml:"armor"`
+	Weapons      string   `xml:"weapons"`
+	Tools        string   `xml:"tools"`
+	Wealth       string   `xml:"wealth"`
 }
 
 // NewCompendiumParser creates a new CompendiumParser instance
@@ -439,40 +440,99 @@ func (cp *CompendiumParser) parseBackground(xmlBackground XMLBackground) Backgro
 func (cp *CompendiumParser) parseClass(xmlClass XMLClass) Class {
 	skillsCount, _ := strconv.Atoi(xmlClass.Skills)
 
-	proficiencies := strings.Split(xmlClass.Proficiency, ",")
-	for i, prof := range proficiencies {
-		proficiencies[i] = strings.TrimSpace(prof)
+	// Parse proficiencies - this field contains both saving throws AND skill choices
+	allProfs := strings.Split(xmlClass.Proficiency, ",")
+	savingThrows := []string{}
+	weaponProficiencies := []string{}
+	skillsChoices := []string{}
+
+	// Common saving throw abilities
+	savingThrowAbilities := map[string]bool{
+		"Strength":     true,
+		"Dexterity":    true,
+		"Constitution": true,
+		"Intelligence": true,
+		"Wisdom":       true,
+		"Charisma":     true,
 	}
 
-	armor := strings.Split(xmlClass.Armor, ",")
-	for i, a := range armor {
-		armor[i] = strings.TrimSpace(a)
+	// Common skill abilities
+	skillAbilities := map[string]bool{
+		"Acrobatics":      true,
+		"Animal Handling": true,
+		"Arcana":          true,
+		"Athletics":       true,
+		"Deception":       true,
+		"History":         true,
+		"Insight":         true,
+		"Intimidation":    true,
+		"Investigation":   true,
+		"Medicine":        true,
+		"Nature":          true,
+		"Perception":      true,
+		"Performance":     true,
+		"Persuasion":      true,
+		"Religion":        true,
+		"Sleight of Hand": true,
+		"Stealth":         true,
+		"Survival":        true,
 	}
 
-	weapons := strings.Split(xmlClass.Weapons, ",")
-	for i, w := range weapons {
-		weapons[i] = strings.TrimSpace(w)
+	// Analyze proficiencies to separate saving throws from skill choices
+	for _, prof := range allProfs {
+		prof = strings.TrimSpace(prof)
+		if savingThrowAbilities[prof] {
+			savingThrows = append(savingThrows, prof)
+		} else if skillAbilities[prof] {
+			skillsChoices = append(skillsChoices, prof)
+		} else {
+			// These are actual proficiencies (shouldn't happen for classes, but just in case)
+			weaponProficiencies = append(weaponProficiencies, prof)
+		}
 	}
 
-	tools := strings.Split(xmlClass.Tools, ",")
-	for i, t := range tools {
-		tools[i] = strings.TrimSpace(t)
+	// Parse tools proficiencies
+	tools := []string{}
+	if xmlClass.Tools != "None" && xmlClass.Tools != "" {
+		tools = strings.Split(xmlClass.Tools, ",")
+		for i, t := range tools {
+			tools[i] = strings.TrimSpace(t)
+		}
 	}
 
-	equipment := strings.Split(xmlClass.Equipment, ",")
-	for i, e := range equipment {
-		equipment[i] = strings.TrimSpace(e)
+	// Parse armor proficiencies
+	armorProfs := strings.Split(xmlClass.Armor, ",")
+	for i, a := range armorProfs {
+		armorProfs[i] = strings.TrimSpace(a)
+	}
+
+	// Parse weapons proficiencies
+	weaponProfs := strings.Split(xmlClass.Weapons, ",")
+	for i, w := range weaponProfs {
+		weaponProfs[i] = strings.TrimSpace(w)
+	}
+
+	// Parse starting equipment from wealth field
+	equipment := []string{}
+	if xmlClass.Wealth != "" {
+		// Convert wealth notation like "5d4x10" to equipment description
+		if strings.Contains(xmlClass.Wealth, "d4") && strings.Contains(xmlClass.Wealth, "x10") {
+			equipment = []string{fmt.Sprintf("Starting gold: %s gp", xmlClass.Wealth)}
+		}
 	}
 
 	return Class{
 		Name:                xmlClass.Name,
 		HitDie:              xmlClass.HD,
-		SavingThrows:        proficiencies,
-		ArmorProficiencies:  armor,
-		WeaponProficiencies: weapons,
+		PrimaryAbility:      xmlClass.SpellAbility,
+		SavingThrows:        savingThrows,
+		ArmorProficiencies:  armorProfs,
+		WeaponProficiencies: weaponProfs,
 		ToolsProficiencies:  tools,
 		SkillsCount:         skillsCount,
+		SkillsChoices:       skillsChoices,
 		Equipment:           equipment,
+		Description:         "", // Could be parsed from other XML sources if available
 	}
 }
 
