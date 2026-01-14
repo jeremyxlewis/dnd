@@ -40,32 +40,38 @@ An interactive terminal user interface for Dungeons & Dragons players and Dungeo
 
 That's it! The application includes comprehensive Compendium XML data files, so no additional data downloads are required. The repository comes with multiple Compendium editions pre-installed in the `Compendium/` directory.
 
-2.  **Get D&D 5e SRD data (required):**
-    ```bash
-    # Clone the official D&D 5e SRD repository
-    git clone https://github.com/adrjian/5e-srd.git dnd-5e-srd
-    
-    # Or download the 5esrd.json file directly to the dnd-5e-srd/ directory
-    mkdir -p dnd-5e-srd
-    # Download from: https://github.com/adrjian/5e-srd/blob/master/5esrd.json
-    ```
-    
-    **IMPORTANT:** The SRD data file (`dnd-5e-srd/5esrd.json`) is **required** for the application to run. The old `data/` JSON files are no longer used.
-
-3.  **Build the application:**
-    ```bash
-    go mod tidy
-    go build -o dnd .
-    ```
-
 ## Usage
 
-3.  **Run the application:**
+### Running the Application
+
+1.  **Run with default Compendium:**
     ```bash
     ./dnd
     ```
-    
-    The application will launch directly into the interactive terminal interface with rich Compendium data loaded by default.
+    Uses `Complete_Compendium.xml` by default (most comprehensive content).
+
+2.  **Run with specific Compendium file:**
+    ```bash
+    ./dnd --compendium Core_Rulebooks.xml
+    ```
+    Choose from available Compendium files in the `Compendium/` directory.
+
+3.  **Run with custom Compendium directory:**
+    ```bash
+    ./dnd --path /path/to/custom/Compendium
+    ```
+
+### Available Compendium Files
+
+The application includes multiple Compendium editions:
+
+- **Complete_Compendium.xml** (default) - All content types with maximum variety
+- **Core_Rulebooks.xml** - Official Wizards of the Coast content only
+- **WotC_only.xml** - Pure WotC content without third-party material
+- **WotC+PartneredContent.xml** - Official plus partnered content
+- **System_Reference_Document.xml** - Basic SRD content
+
+Launch the application and type `compendium list` to see all available files, or `compendium` to see which file is currently loaded.
 
 ### Optional: Install Globally
 
@@ -100,32 +106,32 @@ When you launch `./dnd`, you'll see:
 
 ### Content Browsing
 
-1. **Spell Browser:**
+1.  **Spell Browser:**
    - Type `spell` at the main prompt
    - Browse complete spell list with level, school, and casting time
    - Real-time fuzzy filtering - just start typing!
    - Press Enter for full details: range, components, duration, description
 
-2. **Monster Compendium:**
+2.  **Monster Compendium:**
    - Type `monster` at the main prompt  
    - View complete stat blocks with AC, HP, abilities, actions
    - Includes challenge ratings, skills, and special abilities
 
-3. **Items Database:**
+3.  **Items Database:**
    - Type `item` at the main prompt
    - Browse weapons, armor, and equipment with detailed stats
    - View damage types, properties, values, and weights
 
-4. **Character Creation Tools:**
+4.  **Character Creation Tools:**
    - `species`: Browse available races with ability bonuses and traits
    - `backgrounds`: View background features and proficiencies  
    - `classes`: Browse class information with proficiencies and features
 
-5. **Rules Reference:**
+5.  **Rules Reference:**
    - Type `rules` at the main prompt
    - Look up D&D 5e rules and mechanics
 
-6. **Compendium Management:**
+6.  **Compendium Management:**
    - Type `compendium` to see currently loaded file
    - Type `compendium list` to see all available Compendium files
 
@@ -162,7 +168,7 @@ All content browsers support:
 ```bash
 ./dnd
 
-# At main prompt:
+# At the main prompt:
 > spell          # Enter spell browser
 > fire           # Type to filter for fire spells
 [↓] Fireball    # Select and press Enter
@@ -172,7 +178,7 @@ All content browsers support:
 [Roll result shown]
 ```
 
-The TUI provides an immersive, terminal-native experience for comprehensive D&D 5e content from the Compendium XML data. With rich spell descriptions, detailed monster stat blocks, complete item databases, and character creation tools, it's perfect for quick rule lookups, monster stats, spell references, and dice rolling during your D&D sessions.
+The TUI provides an immersive, terminal-native experience for comprehensive D&D 5e content from Compendium XML data. With rich spell descriptions, detailed monster stat blocks, complete item databases, and character creation tools, it's perfect for quick rule lookups, monster stats, spell references, and dice rolling during your D&D sessions.
 
 ## Contributing
 
