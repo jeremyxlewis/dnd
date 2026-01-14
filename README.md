@@ -27,7 +27,17 @@ An interactive terminal user interface for Dungeons & Dragons players and Dungeo
     cd dnd
     ```
 
-2.  **The D&D data is already included** in the `data/` directory.
+2.  **Get D&D 5e SRD data (required):**
+    ```bash
+    # Clone the official D&D 5e SRD repository
+    git clone https://github.com/adrjian/5e-srd.git dnd-5e-srd
+    
+    # Or download the 5esrd.json file directly to the dnd-5e-srd/ directory
+    mkdir -p dnd-5e-srd
+    # Download from: https://github.com/adrjian/5e-srd/blob/master/5esrd.json
+    ```
+    
+    **IMPORTANT:** The SRD data file (`dnd-5e-srd/5esrd.json`) is **required** for the application to run. The old `data/` JSON files are no longer used.
 
 3.  **Build the application:**
     ```bash
@@ -37,13 +47,12 @@ An interactive terminal user interface for Dungeons & Dragons players and Dungeo
 
 ## Usage
 
-Run the TUI application from the project root:
-
-```bash
-./dnd
-```
-
-The application will launch directly into the interactive terminal interface.
+3.  **Run the application:**
+    ```bash
+    ./dnd
+    ```
+    
+    The application will launch directly into the interactive terminal interface. Make sure you have the SRD data available at `dnd-5e-srd/5esrd.json`.
 
 ### Optional: Install Globally
 
