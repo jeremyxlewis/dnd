@@ -169,13 +169,22 @@ All content browsers support:
 ./dnd
 
 # At the main prompt:
-> spell          # Enter spell browser
-> fire           # Type to filter for fire spells
-[↓] Fireball    # Select and press Enter
+> spell fireball    # Look up specific spell directly
 [Full spell details displayed]
-[Esc]            # Go back to main
-> roll 1d20+5    # Roll dice with advantage
-[Roll result shown]
+
+> spell            # Opens spell browser/fuzzy finder
+[Spell list appears]
+> fire             # Type to filter spells in the list
+[↓] Fireball       # Navigate with arrows and press Enter
+[Full spell details displayed]
+[Esc]              # Go back to main prompt
+
+> search fire      # Global search across all content types
+[Results: Spells, Monsters, Items...]
+[Select any result for details]
+
+> roll 1d20+5     # Roll dice
+[Roll result: 18]   # Individual rolls and total shown
 ```
 
 The TUI provides an immersive, terminal-native experience for comprehensive D&D 5e content from Compendium XML data. With rich spell descriptions, detailed monster stat blocks, complete item databases, and character creation tools, it's perfect for quick rule lookups, monster stats, spell references, and dice rolling during your D&D sessions.
