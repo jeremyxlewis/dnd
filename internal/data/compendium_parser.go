@@ -108,13 +108,12 @@ type XMLRace struct {
 }
 
 type XMLBackground struct {
-	XMLName            xml.Name `xml:"background"`
-	Name               string   `xml:"name"`
-	SkillProficiencies string   `xml:"skillProficiencies"`
-	ToolProficiencies  string   `xml:"toolProficiencies"`
-	Equipment          string   `xml:"equipment"`
-	Feature            string   `xml:"feature"`
-	Text               []string `xml:"text"`
+	XMLName     xml.Name   `xml:"background"`
+	Name        string     `xml:"name"`
+	Proficiency string     `xml:"proficiency"`
+	Feature     string     `xml:"feature"`
+	Text        []string   `xml:"text"`
+	Traits      []XMLTrait `xml:"trait"`
 }
 
 type XMLClass struct {
@@ -358,32 +357,81 @@ func (cp *CompendiumParser) parseRace(xmlRace XMLRace) Species {
 // parseBackground converts XMLBackground to Background
 func (cp *CompendiumParser) parseBackground(xmlBackground XMLBackground) Background {
 	description := ""
+	feature := ""
+	personalityTraits := []string{}
+	ideals := []string{}
+	equipment := []string{}
+	languages := []string{}
+
+	// Use text field for description if available
 	if len(xmlBackground.Text) > 0 {
 		description = strings.Join(xmlBackground.Text, " ")
 	}
 
-	skills := strings.Split(xmlBackground.SkillProficiencies, ",")
+	// Parse traits to extract different information
+	for _, trait := range xmlBackground.Traits {
+		traitLower := strings.ToLower(trait.Name)
+		if traitLower == "description" {
+			description = trait.Text
+		} else if strings.HasPrefix(traitLower, "feature") {
+			feature = trait.Text
+		} else if strings.Contains(traitLower, "suggested characteristics") ||
+			strings.Contains(traitLower, "personality trait") ||
+			strings.Contains(traitLower, "ideal") ||
+			strings.Contains(traitLower, "bond") ||
+			strings.Contains(traitLower, "flaw") {
+			// Add personality-related traits
+			personalityTraits = append(personalityTraits, trait.Text)
+		} else if strings.Contains(traitLower, "ideal") {
+			ideals = append(ideals, trait.Text)
+		}
+	}
+
+	// Parse proficiencies (comma-separated skills)
+	skills := strings.Split(xmlBackground.Proficiency, ",")
 	for i, skill := range skills {
 		skills[i] = strings.TrimSpace(skill)
 	}
 
-	tools := strings.Split(xmlBackground.ToolProficiencies, ",")
-	for i, tool := range tools {
-		tools[i] = strings.TrimSpace(tool)
-	}
-
-	equipment := strings.Split(xmlBackground.Equipment, ",")
-	for i, item := range equipment {
-		equipment[i] = strings.TrimSpace(item)
+	// Extract equipment and languages from description text
+	if description != "" {
+		// Look for equipment and languages in text
+		lines := strings.Split(description, "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "• Equipment:") {
+				// Extract equipment items
+				equipText := strings.TrimPrefix(line, "• Equipment:")
+				equipmentItems := strings.Split(equipText, ",")
+				for _, item := range equipmentItems {
+					trimmed := strings.TrimSpace(item)
+					if trimmed != "" {
+						equipment = append(equipment, trimmed)
+					}
+				}
+			} else if strings.HasPrefix(line, "• Languages:") {
+				// Extract languages
+				langText := strings.TrimPrefix(line, "• Languages:")
+				langItems := strings.Split(langText, ",")
+				for _, lang := range langItems {
+					trimmed := strings.TrimSpace(lang)
+					if trimmed != "" {
+						languages = append(languages, trimmed)
+					}
+				}
+			}
+		}
 	}
 
 	return Background{
 		Name:               xmlBackground.Name,
 		Description:        description,
 		SkillProficiencies: skills,
-		ToolProficiencies:  tools,
+		ToolProficiencies:  []string{}, // Empty since not in XML structure
 		Equipment:          equipment,
-		Feature:            xmlBackground.Feature,
+		Feature:            feature,
+		PersonalityTraits:  personalityTraits,
+		Ideals:             ideals,
 	}
 }
 
